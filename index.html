@@ -1,0 +1,1971 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Task Scheduler</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+<script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  body { font-family: 'Inter', sans-serif; }
+  .font-mono-data { font-family: 'JetBrains Mono', monospace; }
+  @media print {
+    .no-print { display: none !important; }
+    body, .min-h-screen { background: #fff !important; color: #000 !important; }
+    * { color: #111 !important; border-color: #ccc !important; box-shadow: none !important; }
+    a[href]:after { content: none !important; }
+  }
+  #single-print-area { display: none; }
+  @media print {
+    body.printing-task .app-shell { display: none !important; }
+    body.printing-task #single-print-area { display: block !important; }
+    body:not(.printing-task) #single-print-area { display: none !important; }
+  }
+</style>
+</head>
+<body>
+<div id="root"></div>
+
+<script>
+(() => {
+  const { useState, useRef, useEffect } = React;
+  function Icon({ children, size = 16, className = "" }) {
+    return /* @__PURE__ */ React.createElement(
+      "svg",
+      {
+        width: size,
+        height: size,
+        viewBox: "0 0 24 24",
+        fill: "none",
+        stroke: "currentColor",
+        strokeWidth: "2",
+        strokeLinecap: "round",
+        strokeLinejoin: "round",
+        className
+      },
+      children
+    );
+  }
+  const Plus = (p) => /* @__PURE__ */ React.createElement(Icon, { ...p }, /* @__PURE__ */ React.createElement("path", { d: "M12 5v14M5 12h14" }));
+  const X = (p) => /* @__PURE__ */ React.createElement(Icon, { ...p }, /* @__PURE__ */ React.createElement("path", { d: "M18 6 6 18M6 6l12 12" }));
+  const Clock = (p) => /* @__PURE__ */ React.createElement(Icon, { ...p }, /* @__PURE__ */ React.createElement("circle", { cx: "12", cy: "12", r: "10" }), /* @__PURE__ */ React.createElement("path", { d: "M12 6v6l4 2" }));
+  const CheckCircle2 = (p) => /* @__PURE__ */ React.createElement(Icon, { ...p }, /* @__PURE__ */ React.createElement("path", { d: "M21.8 10A10 10 0 1 1 17 3.3" }), /* @__PURE__ */ React.createElement("path", { d: "m9 11 3 3L22 4" }));
+  const Circle = (p) => /* @__PURE__ */ React.createElement(Icon, { ...p }, /* @__PURE__ */ React.createElement("circle", { cx: "12", cy: "12", r: "10" }));
+  const ChevronDown = (p) => /* @__PURE__ */ React.createElement(Icon, { ...p }, /* @__PURE__ */ React.createElement("path", { d: "m6 9 6 6 6-6" }));
+  const ChevronUp = (p) => /* @__PURE__ */ React.createElement(Icon, { ...p }, /* @__PURE__ */ React.createElement("path", { d: "m18 15-6-6-6 6" }));
+  const Trash2 = (p) => /* @__PURE__ */ React.createElement(Icon, { ...p }, /* @__PURE__ */ React.createElement("path", { d: "M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m3 0-1 14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2L4 6h16ZM10 11v6M14 11v6" }));
+  const Server = (p) => /* @__PURE__ */ React.createElement(Icon, { ...p }, /* @__PURE__ */ React.createElement("rect", { x: "2", y: "2", width: "20", height: "8", rx: "2" }), /* @__PURE__ */ React.createElement("rect", { x: "2", y: "14", width: "20", height: "8", rx: "2" }), /* @__PURE__ */ React.createElement("path", { d: "M6 6h.01M6 18h.01" }));
+  const Download = (p) => /* @__PURE__ */ React.createElement(Icon, { ...p }, /* @__PURE__ */ React.createElement("path", { d: "M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" }), /* @__PURE__ */ React.createElement("path", { d: "M7 10l5 5 5-5" }), /* @__PURE__ */ React.createElement("path", { d: "M12 15V3" }));
+  const User = (p) => /* @__PURE__ */ React.createElement(Icon, { ...p }, /* @__PURE__ */ React.createElement("path", { d: "M20 21a8 8 0 0 0-16 0" }), /* @__PURE__ */ React.createElement("circle", { cx: "12", cy: "7", r: "4" }));
+  const Settings = (p) => /* @__PURE__ */ React.createElement(Icon, { ...p }, /* @__PURE__ */ React.createElement("circle", { cx: "12", cy: "12", r: "3" }), /* @__PURE__ */ React.createElement("path", { d: "M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1Z" }));
+  const Pencil = (p) => /* @__PURE__ */ React.createElement(Icon, { ...p }, /* @__PURE__ */ React.createElement("path", { d: "M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z" }));
+  const ImagePlus = (p) => /* @__PURE__ */ React.createElement(Icon, { ...p }, /* @__PURE__ */ React.createElement("rect", { x: "3", y: "3", width: "18", height: "18", rx: "2" }), /* @__PURE__ */ React.createElement("circle", { cx: "9", cy: "9", r: "2" }), /* @__PURE__ */ React.createElement("path", { d: "M21 15l-5-5L5 21" }));
+  const Calendar = (p) => /* @__PURE__ */ React.createElement(Icon, { ...p }, /* @__PURE__ */ React.createElement("rect", { x: "3", y: "4", width: "18", height: "18", rx: "2" }), /* @__PURE__ */ React.createElement("path", { d: "M16 2v4M8 2v4M3 10h18" }));
+  const Palette = (p) => /* @__PURE__ */ React.createElement(Icon, { ...p }, /* @__PURE__ */ React.createElement("circle", { cx: "13.5", cy: "6.5", r: ".5", fill: "currentColor" }), /* @__PURE__ */ React.createElement("circle", { cx: "17.5", cy: "10.5", r: ".5", fill: "currentColor" }), /* @__PURE__ */ React.createElement("circle", { cx: "8.5", cy: "7.5", r: ".5", fill: "currentColor" }), /* @__PURE__ */ React.createElement("circle", { cx: "6.5", cy: "12.5", r: ".5", fill: "currentColor" }), /* @__PURE__ */ React.createElement("path", { d: "M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.9 0 1.6-.7 1.6-1.7 0-.4-.2-.8-.4-1.1-.3-.3-.4-.6-.4-1.1a1.6 1.6 0 0 1 1.7-1.7h2c3 0 5.5-2.5 5.5-5.5C22 6 17.5 2 12 2Z" }));
+  const Lock = (p) => /* @__PURE__ */ React.createElement(Icon, { ...p }, /* @__PURE__ */ React.createElement("rect", { x: "3", y: "11", width: "18", height: "11", rx: "2" }), /* @__PURE__ */ React.createElement("path", { d: "M7 11V7a5 5 0 0 1 10 0v4" }));
+  const Save = (p) => /* @__PURE__ */ React.createElement(Icon, { ...p }, /* @__PURE__ */ React.createElement("path", { d: "M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2Z" }), /* @__PURE__ */ React.createElement("path", { d: "M17 21v-8H7v8M7 3v5h8" }));
+  const UploadIcon = (p) => /* @__PURE__ */ React.createElement(Icon, { ...p }, /* @__PURE__ */ React.createElement("path", { d: "M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" }), /* @__PURE__ */ React.createElement("path", { d: "M17 8l-5-5-5 5" }), /* @__PURE__ */ React.createElement("path", { d: "M12 3v12" }));
+  const Plug = (p) => /* @__PURE__ */ React.createElement(Icon, { ...p }, /* @__PURE__ */ React.createElement("path", { d: "M12 22v-5" }), /* @__PURE__ */ React.createElement("path", { d: "M9 8V2M15 8V2" }), /* @__PURE__ */ React.createElement("path", { d: "M18 8a2 2 0 0 1 2 2c0 4-3.5 7-8 7s-8-3-8-7a2 2 0 0 1 2-2Z" }));
+  const Printer = (p) => /* @__PURE__ */ React.createElement(Icon, { ...p }, /* @__PURE__ */ React.createElement("path", { d: "M6 9V2h12v7" }), /* @__PURE__ */ React.createElement("path", { d: "M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2" }), /* @__PURE__ */ React.createElement("rect", { x: "6", y: "14", width: "12", height: "8" }));
+  const Cloud = (p) => /* @__PURE__ */ React.createElement(Icon, { ...p }, /* @__PURE__ */ React.createElement("path", { d: "M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z" }));
+  const FileText = (p) => /* @__PURE__ */ React.createElement(Icon, { ...p }, /* @__PURE__ */ React.createElement("path", { d: "M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2Z" }), /* @__PURE__ */ React.createElement("path", { d: "M14 2v6h6" }), /* @__PURE__ */ React.createElement("path", { d: "M9 13h6M9 17h6M9 9h1" }));
+  const Copy = (p) => /* @__PURE__ */ React.createElement(Icon, { ...p }, /* @__PURE__ */ React.createElement("rect", { x: "9", y: "9", width: "13", height: "13", rx: "2" }), /* @__PURE__ */ React.createElement("path", { d: "M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" }));
+  const LayoutDashboard = (p) => /* @__PURE__ */ React.createElement(Icon, { ...p }, /* @__PURE__ */ React.createElement("rect", { x: "3", y: "3", width: "7", height: "9", rx: "1" }), /* @__PURE__ */ React.createElement("rect", { x: "14", y: "3", width: "7", height: "5", rx: "1" }), /* @__PURE__ */ React.createElement("rect", { x: "14", y: "12", width: "7", height: "9", rx: "1" }), /* @__PURE__ */ React.createElement("rect", { x: "3", y: "16", width: "7", height: "5", rx: "1" }));
+  const Undo2 = (p) => /* @__PURE__ */ React.createElement(Icon, { ...p }, /* @__PURE__ */ React.createElement("path", { d: "M9 14 4 9l5-5" }), /* @__PURE__ */ React.createElement("path", { d: "M4 9h10.5a5.5 5.5 0 0 1 5.5 5.5v0a5.5 5.5 0 0 1-5.5 5.5H11" }));
+  const ArrowUpDown = (p) => /* @__PURE__ */ React.createElement(Icon, { ...p }, /* @__PURE__ */ React.createElement("path", { d: "m21 16-4 4-4-4" }), /* @__PURE__ */ React.createElement("path", { d: "M17 20V4" }), /* @__PURE__ */ React.createElement("path", { d: "m3 8 4-4 4 4" }), /* @__PURE__ */ React.createElement("path", { d: "M7 4v16" }));
+  const ListChecks = (p) => /* @__PURE__ */ React.createElement(Icon, { ...p }, /* @__PURE__ */ React.createElement("path", { d: "m3 7 2 2 4-4" }), /* @__PURE__ */ React.createElement("path", { d: "m3 17 2 2 4-4" }), /* @__PURE__ */ React.createElement("path", { d: "M13 6h8M13 18h8" }));
+  const Eye = (p) => /* @__PURE__ */ React.createElement(Icon, { ...p }, /* @__PURE__ */ React.createElement("path", { d: "M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7Z" }), /* @__PURE__ */ React.createElement("circle", { cx: 12, cy: 12, r: 3 }));
+  const THEMES = {
+    slate: { key: "slate", label: "Slate", app: "#0b0f14", header: "#0d1218", panel: "#111826", panel2: "#0d1218", border: "#1e293b" },
+    midnight: { key: "midnight", label: "Midnight", app: "#0a0e27", header: "#0c1230", panel: "#141a3d", panel2: "#0f1330", border: "#28305c" },
+    charcoal: { key: "charcoal", label: "Charcoal", app: "#121212", header: "#161616", panel: "#1c1c1c", panel2: "#171717", border: "#2e2e2e" },
+    forest: { key: "forest", label: "Forest", app: "#0a1410", header: "#0c1713", panel: "#12211b", panel2: "#0e1a15", border: "#233c31" },
+    wine: { key: "wine", label: "Wine", app: "#160a10", header: "#190c13", panel: "#241119", panel2: "#1c0d14", border: "#3d1f2a" },
+    ocean: { key: "ocean", label: "Ocean", app: "#071a1e", header: "#092025", panel: "#0e2b32", panel2: "#0a2226", border: "#1b4650" },
+    plum: { key: "plum", label: "Plum", app: "#150a1e", header: "#180c23", panel: "#241333", panel2: "#1c0f28", border: "#3d2154" },
+    amber: { key: "amber", label: "Amber", app: "#1a1208", header: "#20160a", panel: "#2b1f10", panel2: "#22180c", border: "#4a3618" },
+    graphite: { key: "graphite", label: "Graphite", app: "#0d0d10", header: "#101014", panel: "#18181d", panel2: "#131316", border: "#2a2a32" }
+  };
+  function hexToRgba(hex, alpha) {
+    const h = hex.replace("#", "");
+    const r = parseInt(h.substring(0, 2), 16);
+    const g = parseInt(h.substring(2, 4), 16);
+    const b = parseInt(h.substring(4, 6), 16);
+    return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+  }
+  const STATUS = {
+    pending: { label: "Pending", text: "text-amber-300", bg: "bg-amber-400/10", ring: "ring-amber-400/30" },
+    closed: { label: "Closed", text: "text-emerald-300", bg: "bg-emerald-400/10", ring: "ring-emerald-400/30" }
+  };
+  const PRIORITY = {
+    low: { label: "Low", text: "text-sky-300", bg: "bg-sky-400/10", ring: "ring-sky-400/30", hex: "#38bdf8" },
+    medium: { label: "Medium", text: "text-amber-300", bg: "bg-amber-400/10", ring: "ring-amber-400/30", hex: "#fbbf24" },
+    high: { label: "High", text: "text-red-300", bg: "bg-red-400/10", ring: "ring-red-400/30", hex: "#f87171" }
+  };
+  function todayISO() {
+    return (/* @__PURE__ */ new Date()).toISOString().slice(0, 10);
+  }
+  function fmtDate(d) {
+    if (!d) return "\u2014";
+    const dt = /* @__PURE__ */ new Date(d + "T00:00:00");
+    if (isNaN(dt)) return d;
+    return dt.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+  }
+  let idCounter = 1;
+  const nextId = () => idCounter++;
+  const seedTasks = [
+    {
+      id: nextId(),
+      taskName: "Firmware upgrade \u2014 array controller",
+      machine: "NODE-07",
+      model: "PowerEdge R740",
+      serialNumber: "SN-7734-A",
+      engineerName: "A. Rahman",
+      customerName: "Orion Retail Pvt Ltd",
+      site: "Mumbai DC1",
+      area: "Server Room A",
+      hostName: "orion-esx-07",
+      startDate: todayISO(),
+      openDate: todayISO(),
+      closeDate: "",
+      status: "pending",
+      priority: "high",
+      description: "Upgrade controller firmware to latest stable release to resolve known cache-battery false alerts.",
+      remarks: "",
+      gstNumber: "",
+      attachments: [],
+      updates: [
+        { id: nextId(), date: todayISO(), time: "09:12 AM", text: "Vendor ticket opened, awaiting maintenance window." }
+      ]
+    },
+    {
+      id: nextId(),
+      taskName: "Replace failed disk in RAID group",
+      machine: "SAN-STORE-02",
+      model: "Dell ME5024",
+      serialNumber: "SN-5521-C",
+      engineerName: "P. Fernandes",
+      customerName: "Bluepeak Logistics",
+      site: "Pune DC2",
+      area: "Storage Room B",
+      hostName: "bp-storenode-02",
+      startDate: todayISO(),
+      openDate: todayISO(),
+      closeDate: todayISO(),
+      status: "closed",
+      priority: "medium",
+      description: "Disk 4 in RAID group 2 flagged predictive failure; replace and rebuild.",
+      remarks: "Customer informed in advance, no downtime required.",
+      gstNumber: "",
+      attachments: [],
+      updates: [
+        { id: nextId(), date: todayISO(), time: "08:40 AM", text: "Rebuild completed, array healthy." }
+      ]
+    }
+  ];
+  const NEW_VALUE = "__add_new__";
+  function idbOpen() {
+    return new Promise((resolve, reject) => {
+      const req = indexedDB.open("task-scheduler-fs", 1);
+      req.onupgradeneeded = () => {
+        req.result.createObjectStore("handles");
+      };
+      req.onsuccess = () => resolve(req.result);
+      req.onerror = () => reject(req.error);
+    });
+  }
+  async function idbSet(key, value) {
+    const db = await idbOpen();
+    return new Promise((resolve, reject) => {
+      const tx = db.transaction("handles", "readwrite");
+      tx.objectStore("handles").put(value, key);
+      tx.oncomplete = () => resolve();
+      tx.onerror = () => reject(tx.error);
+    });
+  }
+  async function idbGet(key) {
+    const db = await idbOpen();
+    return new Promise((resolve, reject) => {
+      const tx = db.transaction("handles", "readonly");
+      const req = tx.objectStore("handles").get(key);
+      req.onsuccess = () => resolve(req.result);
+      req.onerror = () => reject(req.error);
+    });
+  }
+  async function idbDelete(key) {
+    const db = await idbOpen();
+    return new Promise((resolve, reject) => {
+      const tx = db.transaction("handles", "readwrite");
+      tx.objectStore("handles").delete(key);
+      tx.oncomplete = () => resolve();
+      tx.onerror = () => reject(tx.error);
+    });
+  }
+  const LOCAL_STORAGE_KEY = "task-scheduler-state-v1";
+  function isLocalStorageAvailable() {
+    try {
+      const testKey = "__ts_probe__";
+      localStorage.setItem(testKey, "1");
+      localStorage.removeItem(testKey);
+      return true;
+    } catch (err) {
+      return false;
+    }
+  }
+  function PredefinedSelect({ label, value, options, onChange, onAddOption, placeholder, mono }) {
+    return /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("label", { className: "block text-[11px] uppercase tracking-wide text-slate-500 mb-1.5" }, label), /* @__PURE__ */ React.createElement(
+      "select",
+      {
+        value: options.includes(value) ? value : "",
+        onChange: (e) => {
+          if (e.target.value === NEW_VALUE) {
+            const v = window.prompt(`Add new ${label.toLowerCase()}:`);
+            if (v && v.trim()) {
+              onAddOption(v.trim());
+              onChange(v.trim());
+            }
+          } else {
+            onChange(e.target.value);
+          }
+        },
+        className: `w-full bg-[#0b0f14] border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-100 focus:outline-none focus:ring-2 focus:ring-cyan-400/40 focus:border-cyan-400/50 ${mono ? "font-mono-data" : ""}`
+      },
+      /* @__PURE__ */ React.createElement("option", { value: "", disabled: true }, placeholder),
+      options.map((o) => /* @__PURE__ */ React.createElement("option", { key: o, value: o }, o)),
+      /* @__PURE__ */ React.createElement("option", { value: NEW_VALUE }, "+ Add new\u2026")
+    ));
+  }
+  function ManageListSection({ label, items, onAdd, onDelete }) {
+    const [draft, setDraft] = useState("");
+    return /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("h3", { className: "text-[12px] font-semibold text-slate-300 mb-2" }, label), /* @__PURE__ */ React.createElement("div", { className: "space-y-1.5 mb-2 max-h-40 overflow-y-auto pr-1" }, items.length === 0 && /* @__PURE__ */ React.createElement("p", { className: "text-[12px] text-slate-600 italic" }, "None yet"), items.map((item) => /* @__PURE__ */ React.createElement("div", { key: item, className: "flex items-center justify-between bg-[#0b0f14] border border-slate-800 rounded-lg px-2.5 py-1.5" }, /* @__PURE__ */ React.createElement("span", { className: "text-[12px] font-mono-data text-slate-300 truncate" }, item), /* @__PURE__ */ React.createElement("button", { onClick: () => onDelete(item), className: "text-slate-600 hover:text-red-400 shrink-0 ml-2", title: `Delete ${item}` }, /* @__PURE__ */ React.createElement(Trash2, { size: 13 }))))), /* @__PURE__ */ React.createElement("div", { className: "flex gap-1.5" }, /* @__PURE__ */ React.createElement(
+      "input",
+      {
+        value: draft,
+        onChange: (e) => setDraft(e.target.value),
+        onKeyDown: (e) => {
+          if (e.key === "Enter") {
+            e.preventDefault();
+            if (draft.trim()) {
+              onAdd(draft.trim());
+              setDraft("");
+            }
+          }
+        },
+        placeholder: `Add ${label.toLowerCase()}\u2026`,
+        className: "flex-1 bg-[#0b0f14] border border-slate-700 rounded-lg px-2.5 py-1.5 text-[12px] text-slate-100 placeholder-slate-600 focus:outline-none focus:ring-2 focus:ring-cyan-400/40"
+      }
+    ), /* @__PURE__ */ React.createElement(
+      "button",
+      {
+        onClick: () => {
+          if (draft.trim()) {
+            onAdd(draft.trim());
+            setDraft("");
+          }
+        },
+        className: "bg-slate-800 hover:bg-slate-700 text-slate-200 px-2.5 rounded-lg"
+      },
+      /* @__PURE__ */ React.createElement(Plus, { size: 14 })
+    )));
+  }
+  function ManageListsModal({ machines, models, serials, engineers, customers, sites, areas, hosts, addFns, deleteFns, onClose, onExportList, onImportList, machineListInputRef }) {
+    return /* @__PURE__ */ React.createElement("div", { className: "fixed inset-0 bg-black/60 z-30 flex items-center justify-center p-4", onClick: onClose }, /* @__PURE__ */ React.createElement("div", { className: "bg-[#111826] border border-slate-800 rounded-xl p-5 w-full max-w-3xl max-h-[85vh] overflow-y-auto", onClick: (e) => e.stopPropagation() }, /* @__PURE__ */ React.createElement("div", { className: "flex items-center justify-between mb-4" }, /* @__PURE__ */ React.createElement("h2", { className: "text-sm font-semibold text-slate-100" }, "Manage predefined values"), /* @__PURE__ */ React.createElement("button", { onClick: onClose, className: "text-slate-500 hover:text-slate-200" }, /* @__PURE__ */ React.createElement(X, { size: 18 }))), /* @__PURE__ */ React.createElement("div", { className: "grid grid-cols-1 sm:grid-cols-2 gap-5" }, /* @__PURE__ */ React.createElement(ManageListSection, { label: "Machines", items: machines, onAdd: addFns.machine, onDelete: deleteFns.machine }), /* @__PURE__ */ React.createElement(ManageListSection, { label: "Models", items: models, onAdd: addFns.model, onDelete: deleteFns.model }), /* @__PURE__ */ React.createElement(ManageListSection, { label: "Serial numbers", items: serials, onAdd: addFns.serial, onDelete: deleteFns.serial }), /* @__PURE__ */ React.createElement(ManageListSection, { label: "Host names", items: hosts, onAdd: addFns.host, onDelete: deleteFns.host }), /* @__PURE__ */ React.createElement(ManageListSection, { label: "Engineers", items: engineers, onAdd: addFns.engineer, onDelete: deleteFns.engineer }), /* @__PURE__ */ React.createElement(ManageListSection, { label: "Customers", items: customers, onAdd: addFns.customer, onDelete: deleteFns.customer }), /* @__PURE__ */ React.createElement(ManageListSection, { label: "Sites", items: sites, onAdd: addFns.site, onDelete: deleteFns.site }), /* @__PURE__ */ React.createElement(ManageListSection, { label: "Areas", items: areas, onAdd: addFns.area, onDelete: deleteFns.area })), /* @__PURE__ */ React.createElement("div", { className: "border-t border-slate-800 mt-5 pt-4" }, /* @__PURE__ */ React.createElement("p", { className: "text-[11px] uppercase tracking-wide text-slate-500 mb-2" }, "Machine master list"), /* @__PURE__ */ React.createElement("p", { className: "text-[12px] text-slate-500 mb-2" }, "Export every list above (machines, models, serials, hosts, engineers, customers, sites, areas) as its own file \u2014 separate from your task backup \u2014 so it can be loaded straight into a fresh copy of this app."), /* @__PURE__ */ React.createElement("input", { type: "file", accept: "application/json", ref: machineListInputRef, onChange: onImportList, className: "hidden" }), /* @__PURE__ */ React.createElement("div", { className: "flex gap-2" }, /* @__PURE__ */ React.createElement("button", { onClick: onExportList, className: "flex-1 flex items-center justify-center gap-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 text-[12px] rounded-lg py-2" }, /* @__PURE__ */ React.createElement(Save, { size: 13 }), " Export machine list"), /* @__PURE__ */ React.createElement("button", { onClick: () => machineListInputRef.current && machineListInputRef.current.click(), className: "flex-1 flex items-center justify-center gap-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 text-[12px] rounded-lg py-2" }, /* @__PURE__ */ React.createElement(UploadIcon, { size: 13 }), " Import machine list")))));
+  }
+  function CountBar({ label, count, max, color }) {
+    const pct = max > 0 ? Math.max(4, Math.round(count / max * 100)) : 0;
+    return /* @__PURE__ */ React.createElement("div", { className: "mb-2.5" }, /* @__PURE__ */ React.createElement("div", { className: "flex justify-between text-[12px] text-slate-400 mb-1" }, /* @__PURE__ */ React.createElement("span", { className: "truncate pr-2" }, label), /* @__PURE__ */ React.createElement("span", { className: "font-mono-data text-slate-300 shrink-0" }, count)), /* @__PURE__ */ React.createElement("div", { className: "h-1.5 rounded-full bg-slate-800 overflow-hidden" }, /* @__PURE__ */ React.createElement("div", { className: "h-full rounded-full", style: { width: `${pct}%`, backgroundColor: color } })));
+  }
+  function Dashboard({ tasks, theme, accentColor }) {
+    const total = tasks.length;
+    const pending = tasks.filter((t) => t.status === "pending").length;
+    const closed = total - pending;
+    const overdue = tasks.filter((t) => t.status === "pending" && t.startDate && t.startDate < todayISO()).length;
+    const thisMonth = todayISO().slice(0, 7);
+    const closedThisMonth = tasks.filter((t) => t.status === "closed" && t.closeDate && t.closeDate.slice(0, 7) === thisMonth).length;
+    const highPriorityOpen = tasks.filter((t) => t.status === "pending" && t.priority === "high").length;
+    const countBy = (key) => {
+      const map = {};
+      tasks.forEach((t) => {
+        const v = t[key] || "Unassigned";
+        map[v] = (map[v] || 0) + 1;
+      });
+      return Object.entries(map).sort((a, b) => b[1] - a[1]).slice(0, 8);
+    };
+    const byEngineer = countBy("engineerName");
+    const byCustomer = countBy("customerName");
+    const maxEngineer = Math.max(1, ...byEngineer.map((x) => x[1]));
+    const maxCustomer = Math.max(1, ...byCustomer.map((x) => x[1]));
+    const cards = [
+      { label: "Total tasks", value: total },
+      { label: "Pending", value: pending },
+      { label: "Closed", value: closed },
+      { label: "Overdue", value: overdue },
+      { label: "Closed this month", value: closedThisMonth },
+      { label: "High priority open", value: highPriorityOpen }
+    ];
+    return /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { className: "grid grid-cols-2 sm:grid-cols-3 gap-3 mb-6" }, cards.map((c) => /* @__PURE__ */ React.createElement("div", { key: c.label, className: "border rounded-xl p-4", style: { backgroundColor: theme.panel, borderColor: theme.border } }, /* @__PURE__ */ React.createElement("p", { className: "text-2xl font-semibold text-slate-100" }, c.value), /* @__PURE__ */ React.createElement("p", { className: "text-[12px] text-slate-500 mt-0.5" }, c.label)))), /* @__PURE__ */ React.createElement("div", { className: "grid grid-cols-1 sm:grid-cols-2 gap-4" }, /* @__PURE__ */ React.createElement("div", { className: "border rounded-xl p-4", style: { backgroundColor: theme.panel, borderColor: theme.border } }, /* @__PURE__ */ React.createElement("h3", { className: "text-[12px] uppercase tracking-wide text-slate-500 mb-3" }, "Tasks by engineer"), byEngineer.length === 0 && /* @__PURE__ */ React.createElement("p", { className: "text-slate-600 text-[12px]" }, "No data yet"), byEngineer.map(([name, count]) => /* @__PURE__ */ React.createElement(CountBar, { key: name, label: name, count, max: maxEngineer, color: accentColor }))), /* @__PURE__ */ React.createElement("div", { className: "border rounded-xl p-4", style: { backgroundColor: theme.panel, borderColor: theme.border } }, /* @__PURE__ */ React.createElement("h3", { className: "text-[12px] uppercase tracking-wide text-slate-500 mb-3" }, "Tasks by customer"), byCustomer.length === 0 && /* @__PURE__ */ React.createElement("p", { className: "text-slate-600 text-[12px]" }, "No data yet"), byCustomer.map(([name, count]) => /* @__PURE__ */ React.createElement(CountBar, { key: name, label: name, count, max: maxCustomer, color: accentColor })))));
+  }
+  function TaskDetailBody({ t }) {
+    const s = STATUS[t.status];
+    const pr = PRIORITY[t.priority];
+    return /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { className: "flex flex-wrap items-center gap-2 mb-4" }, pr && /* @__PURE__ */ React.createElement("span", { className: `text-[11px] font-medium px-2 py-1 rounded-full ring-1 ${pr.bg} ${pr.text} ${pr.ring}` }, pr.label, " priority"), /* @__PURE__ */ React.createElement("span", { className: `text-[11px] font-medium px-2 py-1 rounded-full ring-1 ${s.bg} ${s.text} ${s.ring}` }, s.label)), /* @__PURE__ */ React.createElement("div", { className: "grid grid-cols-2 sm:grid-cols-3 gap-x-4 gap-y-2 text-[13px] mb-5" }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("p", { className: "text-[10px] uppercase tracking-wide text-slate-500" }, "Machine"), /* @__PURE__ */ React.createElement("p", { className: "font-mono-data" }, t.machine || "\u2014")), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("p", { className: "text-[10px] uppercase tracking-wide text-slate-500" }, "Model"), /* @__PURE__ */ React.createElement("p", { className: "font-mono-data" }, t.model || "\u2014")), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("p", { className: "text-[10px] uppercase tracking-wide text-slate-500" }, "Serial number"), /* @__PURE__ */ React.createElement("p", { className: "font-mono-data" }, t.serialNumber || "\u2014")), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("p", { className: "text-[10px] uppercase tracking-wide text-slate-500" }, "Host name"), /* @__PURE__ */ React.createElement("p", { className: "font-mono-data" }, t.hostName || "\u2014")), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("p", { className: "text-[10px] uppercase tracking-wide text-slate-500" }, "Engineer"), /* @__PURE__ */ React.createElement("p", null, t.engineerName || "\u2014")), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("p", { className: "text-[10px] uppercase tracking-wide text-slate-500" }, "Customer"), /* @__PURE__ */ React.createElement("p", null, t.customerName || "\u2014")), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("p", { className: "text-[10px] uppercase tracking-wide text-slate-500" }, "Site"), /* @__PURE__ */ React.createElement("p", null, t.site || "\u2014")), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("p", { className: "text-[10px] uppercase tracking-wide text-slate-500" }, "Area"), /* @__PURE__ */ React.createElement("p", null, t.area || "\u2014")), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("p", { className: "text-[10px] uppercase tracking-wide text-slate-500" }, "GST number"), /* @__PURE__ */ React.createElement("p", { className: "font-mono-data" }, t.gstNumber || "\u2014")), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("p", { className: "text-[10px] uppercase tracking-wide text-slate-500" }, "Start date"), /* @__PURE__ */ React.createElement("p", { className: "font-mono-data" }, fmtDate(t.startDate))), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("p", { className: "text-[10px] uppercase tracking-wide text-slate-500" }, "Open date"), /* @__PURE__ */ React.createElement("p", { className: "font-mono-data" }, fmtDate(t.openDate))), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("p", { className: "text-[10px] uppercase tracking-wide text-slate-500" }, "Close date"), /* @__PURE__ */ React.createElement("p", { className: "font-mono-data" }, t.closeDate ? fmtDate(t.closeDate) : "\u2014"))), t.description && /* @__PURE__ */ React.createElement("div", { className: "mb-4" }, /* @__PURE__ */ React.createElement("p", { className: "text-[10px] uppercase tracking-wide text-slate-500 mb-1" }, "Description / work done"), /* @__PURE__ */ React.createElement("p", { className: "text-[13px] whitespace-pre-wrap" }, t.description)), t.remarks && /* @__PURE__ */ React.createElement("div", { className: "mb-4" }, /* @__PURE__ */ React.createElement("p", { className: "text-[10px] uppercase tracking-wide text-slate-500 mb-1" }, "Remarks"), /* @__PURE__ */ React.createElement("p", { className: "text-[13px] whitespace-pre-wrap" }, t.remarks)), /* @__PURE__ */ React.createElement("div", { className: "mb-4" }, /* @__PURE__ */ React.createElement("p", { className: "text-[10px] uppercase tracking-wide text-slate-500 mb-2" }, "Full update history (", t.updates.length, ")"), t.updates.length === 0 ? /* @__PURE__ */ React.createElement("p", { className: "text-[13px] text-slate-500" }, "No updates logged yet.") : /* @__PURE__ */ React.createElement("ul", { className: "space-y-3" }, [...t.updates].sort((a, b) => (a.date || "").localeCompare(b.date || "")).map((u) => /* @__PURE__ */ React.createElement("li", { key: u.id, className: "text-[13px] border-l-2 border-slate-700 pl-3" }, /* @__PURE__ */ React.createElement("div", { className: "flex items-baseline gap-2 text-[11px] font-mono-data text-cyan-400/70 mb-0.5" }, /* @__PURE__ */ React.createElement("span", null, fmtDate(u.date)), /* @__PURE__ */ React.createElement("span", { className: "text-slate-600" }, "\xB7"), /* @__PURE__ */ React.createElement("span", null, u.time)), /* @__PURE__ */ React.createElement("p", { className: "whitespace-pre-wrap" }, u.text))))), (t.attachments || []).length > 0 && /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("p", { className: "text-[10px] uppercase tracking-wide text-slate-500 mb-2" }, "Attachments (", t.attachments.length, ")"), /* @__PURE__ */ React.createElement("div", { className: "grid grid-cols-3 sm:grid-cols-4 gap-2" }, t.attachments.map((a) => /* @__PURE__ */ React.createElement("div", { key: a.id, className: "border border-slate-800 rounded-lg overflow-hidden" }, a.type && a.type.startsWith("image/") ? /* @__PURE__ */ React.createElement("img", { src: a.dataUrl, alt: a.name, className: "w-full h-16 object-cover" }) : /* @__PURE__ */ React.createElement("div", { className: "w-full h-16 flex items-center justify-center text-[10px] text-slate-500 px-1 text-center" }, a.name))))));
+  }
+  function TaskDetailModal({ task, onClose, onPrint, onExportWord, onToggleStatus, accentColor }) {
+    return /* @__PURE__ */ React.createElement("div", { className: "fixed inset-0 bg-black/60 z-30 flex items-center justify-center p-4 no-print", onClick: onClose }, /* @__PURE__ */ React.createElement("div", { className: "bg-[#111826] border border-slate-800 rounded-xl w-full max-w-2xl max-h-[88vh] overflow-y-auto", onClick: (e) => e.stopPropagation() }, /* @__PURE__ */ React.createElement("div", { className: "flex items-center justify-between gap-3 p-5 border-b border-slate-800 sticky top-0 bg-[#111826] flex-wrap" }, /* @__PURE__ */ React.createElement("h2", { className: "text-sm font-semibold text-slate-100 truncate" }, task.taskName), /* @__PURE__ */ React.createElement("div", { className: "flex items-center gap-2 shrink-0" }, /* @__PURE__ */ React.createElement("button", { onClick: onToggleStatus, className: "flex items-center gap-1.5 font-medium text-[12px] px-3 py-1.5 rounded-lg text-[#06222b]", style: { backgroundColor: task.status === "pending" ? "#34d399" : "#f59e0b" } }, task.status === "pending" ? /* @__PURE__ */ React.createElement(CheckCircle2, { size: 13 }) : /* @__PURE__ */ React.createElement(Circle, { size: 13 }), task.status === "pending" ? "Mark as closed" : "Reopen task"), /* @__PURE__ */ React.createElement("button", { onClick: onPrint, className: "flex items-center gap-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 text-[12px] px-3 py-1.5 rounded-lg" }, /* @__PURE__ */ React.createElement(Printer, { size: 13 }), " Print PDF"), /* @__PURE__ */ React.createElement("button", { onClick: onExportWord, className: "flex items-center gap-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 text-[12px] px-3 py-1.5 rounded-lg" }, /* @__PURE__ */ React.createElement(FileText, { size: 13 }), " Word"), /* @__PURE__ */ React.createElement("button", { onClick: onClose, className: "text-slate-500 hover:text-slate-200" }, /* @__PURE__ */ React.createElement(X, { size: 18 })))), /* @__PURE__ */ React.createElement("div", { className: "p-5" }, /* @__PURE__ */ React.createElement(TaskDetailBody, { t: task }))));
+  }
+  function WordTemplateModal({ wordTemplate, setWordTemplate, onClose, accentColor }) {
+    const toggles = [
+      ["includeLogo", "Company logo"],
+      ["includeDetailsTable", "Details table (machine, model, serial, engineer, customer, site, dates\u2026)"],
+      ["includeGst", "GST number (inside details table, when filled)"],
+      ["includeDescription", "Description / work done"],
+      ["includeRemarks", "Remarks"],
+      ["includeUpdates", "Update history (with dates)"],
+      ["includeAttachmentsList", "List of attachment file names"],
+      ["includeSignatureBlock", "Signature lines (Engineer / Customer)"]
+    ];
+    const set = (key, value) => setWordTemplate({ ...wordTemplate, [key]: value });
+    return /* @__PURE__ */ React.createElement("div", { className: "fixed inset-0 bg-black/60 z-30 flex items-center justify-center p-4 no-print", onClick: onClose }, /* @__PURE__ */ React.createElement("div", { className: "bg-[#111826] border border-slate-800 rounded-xl p-5 w-full max-w-lg max-h-[85vh] overflow-y-auto", onClick: (e) => e.stopPropagation() }, /* @__PURE__ */ React.createElement("div", { className: "flex items-center justify-between mb-1" }, /* @__PURE__ */ React.createElement("h2", { className: "text-sm font-semibold text-slate-100" }, "Word report template"), /* @__PURE__ */ React.createElement("button", { onClick: onClose, className: "text-slate-500 hover:text-slate-200" }, /* @__PURE__ */ React.createElement(X, { size: 18 }))), /* @__PURE__ */ React.createElement("p", { className: "text-[12px] text-slate-500 mb-4" }, "Choose what appears in the Word report. Applies to every Word download."), /* @__PURE__ */ React.createElement("div", { className: "space-y-2 mb-4" }, toggles.map(([key, label]) => /* @__PURE__ */ React.createElement("label", { key, className: "flex items-start gap-2 text-[13px] text-slate-300 cursor-pointer" }, /* @__PURE__ */ React.createElement("input", { type: "checkbox", checked: !!wordTemplate[key], onChange: (e) => set(key, e.target.checked), className: "mt-0.5" }), /* @__PURE__ */ React.createElement("span", null, label)))), /* @__PURE__ */ React.createElement("label", { className: "block text-[11px] uppercase tracking-wide text-slate-500 mb-1.5" }, "Header text (under the title \u2014 e.g. company address, contact)"), /* @__PURE__ */ React.createElement(
+      "textarea",
+      {
+        rows: 3,
+        value: wordTemplate.headerText,
+        onChange: (e) => set("headerText", e.target.value),
+        placeholder: "Your company name, address, phone, email\u2026",
+        className: "w-full bg-[#0b0f14] border border-slate-700 rounded-lg px-3 py-2 text-[13px] text-slate-100 placeholder-slate-600 focus:outline-none focus:ring-2 focus:ring-cyan-400/40 mb-4"
+      }
+    ), /* @__PURE__ */ React.createElement("label", { className: "block text-[11px] uppercase tracking-wide text-slate-500 mb-1.5" }, "Footer text (bottom of the report)"), /* @__PURE__ */ React.createElement(
+      "textarea",
+      {
+        rows: 3,
+        value: wordTemplate.footerText,
+        onChange: (e) => set("footerText", e.target.value),
+        placeholder: "e.g. Thank you for your business. Terms & conditions\u2026",
+        className: "w-full bg-[#0b0f14] border border-slate-700 rounded-lg px-3 py-2 text-[13px] text-slate-100 placeholder-slate-600 focus:outline-none focus:ring-2 focus:ring-cyan-400/40 mb-4"
+      }
+    ), /* @__PURE__ */ React.createElement("button", { onClick: onClose, className: "w-full font-medium text-sm px-4 py-2 rounded-lg text-[#06222b]", style: { backgroundColor: accentColor } }, "Done")));
+  }
+  /* ---- Google Drive sync engine ---- */
+  const DRIVE_FILE_NAME = "task-scheduler-data.json";
+  const DRIVE_SCOPE = "https://www.googleapis.com/auth/drive.file";
+  const DRIVE_KEYS = ["appTitle", "logo", "wordTemplate", "tasks", "machines", "models", "serials", "hosts", "engineers", "customers", "sites", "areas", "themeKey", "accentColor"];
+  function lsGet(k) {
+    try { return localStorage.getItem(k); } catch (e) { return null; }
+  }
+  function lsSet(k, v) {
+    try { if (v == null) localStorage.removeItem(k); else localStorage.setItem(k, v); } catch (e) { /* storage unavailable */ }
+  }
+  function cyrb53(str) {
+    let h1 = 0xdeadbeef, h2 = 0x41c6ce57;
+    for (let i = 0, ch; i < str.length; i++) {
+      ch = str.charCodeAt(i);
+      h1 = Math.imul(h1 ^ ch, 2654435761);
+      h2 = Math.imul(h2 ^ ch, 1597334677);
+    }
+    h1 = Math.imul(h1 ^ (h1 >>> 16), 2246822507) ^ Math.imul(h2 ^ (h2 >>> 13), 3266489909);
+    h2 = Math.imul(h2 ^ (h2 >>> 16), 2246822507) ^ Math.imul(h1 ^ (h1 >>> 13), 3266489909);
+    return (4294967296 * (2097151 & h2) + (h1 >>> 0)).toString(36) + "-" + str.length;
+  }
+  function makeDriveSync() {
+    const D = {
+      token: null,
+      tokenExpiry: 0,
+      fileId: null,
+      hasValidToken() { return !!D.token && Date.now() < D.tokenExpiry; },
+      loadGis() {
+        return new Promise((resolve, reject) => {
+          if (window.google && window.google.accounts && window.google.accounts.oauth2) { resolve(); return; }
+          const s = document.createElement("script");
+          s.src = "https://accounts.google.com/gsi/client";
+          s.async = true;
+          s.onload = () => resolve();
+          s.onerror = () => reject(new Error("Could not load Google sign-in. Check your internet connection."));
+          document.head.appendChild(s);
+        });
+      },
+      async authorize(clientId, interactive) {
+        await D.loadGis();
+        return new Promise((resolve, reject) => {
+          let settled = false;
+          const finish = (fn, arg) => { if (settled) return; settled = true; clearTimeout(timer); fn(arg); };
+          const timer = interactive ? null : setTimeout(() => finish(reject, new Error("NEEDS_RECONNECT")), 12000);
+          const client = window.google.accounts.oauth2.initTokenClient({
+            client_id: clientId,
+            scope: DRIVE_SCOPE,
+            callback: (resp) => {
+              if (!resp || resp.error) {
+                finish(reject, new Error(interactive ? ((resp && (resp.error_description || resp.error)) || "Sign-in failed.") : "NEEDS_RECONNECT"));
+                return;
+              }
+              D.token = resp.access_token;
+              D.tokenExpiry = Date.now() + ((Number(resp.expires_in) || 3600) - 60) * 1000;
+              finish(resolve);
+            },
+            error_callback: (err) => {
+              finish(reject, new Error(interactive ? "Sign-in was cancelled or blocked (" + ((err && err.type) || "unknown") + "). Allow pop-ups for this page and try again." : "NEEDS_RECONNECT"));
+            },
+          });
+          client.requestAccessToken({ prompt: interactive ? "" : "none" });
+        });
+      },
+      async ensureToken(clientId) {
+        if (D.hasValidToken()) return;
+        await D.authorize(clientId, false);
+      },
+      async api(url, opts) {
+        const o = opts || {};
+        const res = await fetch(url, { ...o, headers: { ...(o.headers || {}), Authorization: "Bearer " + D.token } });
+        if (res.status === 401) { D.token = null; throw new Error("NEEDS_RECONNECT"); }
+        if (res.status === 404) throw new Error("DRIVE_FILE_MISSING");
+        if (!res.ok) throw new Error("Google Drive error " + res.status);
+        return res;
+      },
+      async findFile() {
+        const q = encodeURIComponent("name='" + DRIVE_FILE_NAME + "' and trashed=false");
+        const res = await D.api("https://www.googleapis.com/drive/v3/files?q=" + q + "&fields=files(id,modifiedTime)&orderBy=modifiedTime%20desc&pageSize=1");
+        const json = await res.json();
+        return json.files && json.files.length ? json.files[0] : null;
+      },
+      async createFile(body) {
+        const boundary = "tsboundary" + Date.now();
+        const metadata = JSON.stringify({ name: DRIVE_FILE_NAME, mimeType: "application/json" });
+        const payload = "--" + boundary + "\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n" + metadata + "\r\n--" + boundary + "\r\nContent-Type: application/json\r\n\r\n" + body + "\r\n--" + boundary + "--";
+        const res = await D.api("https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id,modifiedTime", {
+          method: "POST",
+          headers: { "Content-Type": "multipart/related; boundary=" + boundary },
+          body: payload,
+        });
+        return res.json();
+      },
+      async updateFile(id, body) {
+        const res = await D.api("https://www.googleapis.com/upload/drive/v3/files/" + id + "?uploadType=media&fields=id,modifiedTime", {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body,
+        });
+        return res.json();
+      },
+      async download(id) {
+        const res = await D.api("https://www.googleapis.com/drive/v3/files/" + id + "?alt=media");
+        return JSON.parse(await res.text());
+      },
+      async getMeta(id) {
+        const res = await D.api("https://www.googleapis.com/drive/v3/files/" + id + "?fields=modifiedTime");
+        return res.json();
+      },
+    };
+    return D;
+  }
+  const DriveSync = makeDriveSync();
+  function makeDriveEngine(opts) {
+    const D = opts.drive;
+    const state = { hash: opts.storage.get("ts-drive-hash"), mod: opts.storage.get("ts-drive-mod") };
+    function payloadObj() {
+      const d = opts.getData();
+      const o = {};
+      DRIVE_KEYS.forEach((k) => { if (k in d) o[k] = d[k]; });
+      return o;
+    }
+    const hashOf = (o) => cyrb53(JSON.stringify(o));
+    function markSynced(mod, hash) {
+      state.mod = mod;
+      state.hash = hash;
+      opts.storage.set("ts-drive-mod", mod);
+      opts.storage.set("ts-drive-hash", hash);
+    }
+    async function push() {
+      const obj = payloadObj();
+      const hash = hashOf(obj);
+      const body = JSON.stringify({ ...obj, savedAt: new Date().toISOString() });
+      const res = D.fileId ? await D.updateFile(D.fileId, body) : await D.createFile(body);
+      D.fileId = res.id;
+      markSynced(res.modifiedTime, hash);
+    }
+    function pullApply(remote, mod) {
+      const picked = {};
+      DRIVE_KEYS.forEach((k) => { if (k in remote) picked[k] = remote[k]; });
+      markSynced(mod, hashOf(picked));
+      opts.applyData(remote);
+    }
+    async function reconcile() {
+      await D.ensureToken(opts.getClientId());
+      if (!D.fileId) {
+        const f = await D.findFile();
+        if (!f) { await push(); return "created"; }
+        D.fileId = f.id;
+      }
+      const meta = await D.getMeta(D.fileId);
+      const dirty = hashOf(payloadObj()) !== state.hash;
+      const remoteChanged = meta.modifiedTime !== state.mod;
+      const pull = async () => {
+        const remote = await D.download(D.fileId);
+        pullApply(remote, meta.modifiedTime);
+        return "pulled";
+      };
+      if (remoteChanged && !dirty) return pull();
+      if (remoteChanged && dirty) {
+        if (opts.confirmConflict()) return pull();
+        await push();
+        return "pushed";
+      }
+      if (dirty) { await push(); return "pushed"; }
+      return "idle";
+    }
+    function reset() {
+      state.hash = null;
+      state.mod = null;
+      D.fileId = null;
+      D.token = null;
+      opts.storage.set("ts-drive-mod", null);
+      opts.storage.set("ts-drive-hash", null);
+    }
+    return { reconcile, reset, state };
+  }
+  /* ---- end Google Drive sync engine ---- */
+  function DriveSyncModal({ clientId, setClientId, enabled, status, message, onConnect, onSyncNow, onDisconnect, onClose, accentColor, isFile }) {
+    const labels = { off: "Not connected", syncing: "Syncing\u2026", synced: "Up to date", "needs-reconnect": "Sign-in needed", offline: "Offline \u2014 will retry", error: "Problem" };
+    const dots = { synced: "#34d399", syncing: "#fbbf24", off: "#64748b", "needs-reconnect": "#fbbf24", offline: "#fbbf24", error: "#f87171" };
+    return /* @__PURE__ */ React.createElement("div", { className: "fixed inset-0 bg-black/60 z-30 flex items-center justify-center p-4 no-print", onClick: onClose }, /* @__PURE__ */ React.createElement("div", { className: "bg-[#111826] border border-slate-800 rounded-xl p-5 w-full max-w-md max-h-[85vh] overflow-y-auto", onClick: (e) => e.stopPropagation() }, /* @__PURE__ */ React.createElement("div", { className: "flex items-center justify-between mb-1" }, /* @__PURE__ */ React.createElement("h2", { className: "text-sm font-semibold text-slate-100" }, "Google Drive sync"), /* @__PURE__ */ React.createElement("button", { onClick: onClose, className: "text-slate-500 hover:text-slate-200" }, /* @__PURE__ */ React.createElement(X, { size: 18 }))), /* @__PURE__ */ React.createElement("p", { className: "text-[12px] text-slate-500 mb-4" }, "Keeps your tasks the same on your PC and phone by saving them to a file in your own Google Drive. First-time setup steps are in SETUP-GOOGLE-DRIVE.md."), isFile && /* @__PURE__ */ React.createElement("p", { className: "text-[12px] text-amber-300 bg-amber-400/10 rounded-lg p-2.5 mb-4" }, "Drive sign-in doesn't work when the file is opened directly. Open the app with the launcher (localhost) or from your web address."), /* @__PURE__ */ React.createElement("label", { className: "block text-[11px] uppercase tracking-wide text-slate-500 mb-1.5" }, "Google Client ID"), /* @__PURE__ */ React.createElement(
+      "input",
+      {
+        value: clientId,
+        onChange: (e) => setClientId(e.target.value),
+        placeholder: "123456789-abc\u2026.apps.googleusercontent.com",
+        className: "w-full bg-[#0b0f14] border border-slate-700 rounded-lg px-3 py-2 text-[12px] font-mono-data text-slate-100 placeholder-slate-600 focus:outline-none focus:ring-2 focus:ring-cyan-400/40 mb-4"
+      }
+    ), /* @__PURE__ */ React.createElement("div", { className: "flex items-center gap-2 mb-1" }, /* @__PURE__ */ React.createElement("span", { className: "w-2 h-2 rounded-full", style: { backgroundColor: dots[status] || "#64748b" } }), /* @__PURE__ */ React.createElement("span", { className: "text-[13px] text-slate-200" }, labels[status] || status)), message && /* @__PURE__ */ React.createElement("p", { className: "text-[12px] text-slate-400 mb-3" }, message), /* @__PURE__ */ React.createElement("div", { className: "mb-3" }), !enabled ? /* @__PURE__ */ React.createElement("button", { onClick: onConnect, className: "w-full font-medium text-sm px-4 py-2 rounded-lg text-[#06222b]", style: { backgroundColor: accentColor } }, "Connect Google Drive") : /* @__PURE__ */ React.createElement("div", { className: "space-y-2" }, (status === "needs-reconnect" || status === "error") && /* @__PURE__ */ React.createElement("button", { onClick: onConnect, className: "w-full font-medium text-sm px-4 py-2 rounded-lg text-[#06222b]", style: { backgroundColor: accentColor } }, "Reconnect"), /* @__PURE__ */ React.createElement("button", { onClick: onSyncNow, className: "w-full text-sm bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg py-2" }, "Sync now"), /* @__PURE__ */ React.createElement("button", { onClick: onDisconnect, className: "w-full text-sm text-red-400 hover:text-red-300 rounded-lg py-2" }, "Disconnect")), /* @__PURE__ */ React.createElement("p", { className: "text-[11px] text-slate-600 mt-4 leading-relaxed" }, "Changes sync automatically a few seconds after you make them, and every 30 seconds the app checks for changes from your other device. If both devices are edited at the same moment, the app asks which version to keep. Wallpaper stays on each device and is not synced.")));
+  }
+  function TaskScheduler() {
+    const [appTitle, setAppTitle] = useState("Task Scheduler");
+    const [editingTitle, setEditingTitle] = useState(false);
+    const [logo, setLogo] = useState(null);
+    const logoInputRef = useRef(null);
+    const [wallpaper, setWallpaper] = useState(null);
+    const wallpaperInputRef = useRef(null);
+    const [wallpaperOpacity, setWallpaperOpacity] = useState(0.82);
+    const [showWordTemplate, setShowWordTemplate] = useState(false);
+    const [wordTemplate, setWordTemplate] = useState({
+      includeLogo: true, includeDetailsTable: true, includeDescription: true, includeRemarks: true,
+      includeUpdates: true, includeGst: true, includeAttachmentsList: false, includeSignatureBlock: false,
+      headerText: "", footerText: ""
+    });
+    const [tasks, setTasks] = useState(seedTasks);
+    const [machines, setMachines] = useState(["NODE-07", "SAN-STORE-02", "SAN-STORE-04"]);
+    const [models, setModels] = useState(["PowerEdge R740", "Dell ME5024", "HPE DL380"]);
+    const [serials, setSerials] = useState(["SN-7734-A", "SN-5521-C"]);
+    const [hosts, setHosts] = useState(["orion-esx-07", "bp-storenode-02"]);
+    const [engineers, setEngineers] = useState(["A. Rahman", "P. Fernandes"]);
+    const [customers, setCustomers] = useState(["Orion Retail Pvt Ltd", "Bluepeak Logistics"]);
+    const [sites, setSites] = useState(["Mumbai DC1", "Pune DC2"]);
+    const [areas, setAreas] = useState(["Server Room A", "Storage Room B"]);
+    const [showManage, setShowManage] = useState(false);
+    const machineListInputRef = useRef(null);
+    const [showForm, setShowForm] = useState(false);
+    const [formTab, setFormTab] = useState("details");
+    const [expanded, setExpanded] = useState({});
+    const [cardTab, setCardTab] = useState({});
+    const [updateDraft, setUpdateDraft] = useState({});
+    const [form, setForm] = useState(emptyForm());
+    const [dateFilter, setDateFilter] = useState("");
+    const [monthFilter, setMonthFilter] = useState("");
+    const [search, setSearch] = useState("");
+    const [statusFilter, setStatusFilter] = useState("all");
+    const [sortBy, setSortBy] = useState("newest");
+    const [groupBy, setGroupBy] = useState("none");
+    const [myDayOnly, setMyDayOnly] = useState(false);
+    const [selectedIds, setSelectedIds] = useState([]);
+    const [quickDraft, setQuickDraft] = useState({});
+    const newTaskInputRef = useRef(null);
+    const [view, setView] = useState("tasks");
+    const [undoStack, setUndoStack] = useState([]);
+    const [detailTaskId, setDetailTaskId] = useState(null);
+    const [printTask, setPrintTask] = useState(null);
+    const [themeKey, setThemeKey] = useState("slate");
+    const [accentColor, setAccentColor] = useState("#22d3ee");
+    const [showThemeMenu, setShowThemeMenu] = useState(false);
+    const theme = THEMES[themeKey];
+    const glass = (hex, alpha = 0.62) => wallpaper ? { backgroundColor: hexToRgba(hex, alpha), backdropFilter: "blur(10px)", WebkitBackdropFilter: "blur(10px)" } : { backgroundColor: hex };
+    const [pinCode, setPinCode] = useState(null);
+    const [locked, setLocked] = useState(false);
+    const [pinEntry, setPinEntry] = useState("");
+    const [pinError, setPinError] = useState("");
+    const [showSecurityMenu, setShowSecurityMenu] = useState(false);
+    const backupInputRef = useRef(null);
+    const fsSupported = typeof window !== "undefined" && !!window.showSaveFilePicker;
+    const isFileProtocol = typeof location !== "undefined" && location.protocol === "file:";
+    const [fileHandle, setFileHandle] = useState(null);
+    const [needsReconnect, setNeedsReconnect] = useState(false);
+    const [saveStatus, setSaveStatus] = useState("");
+    const [showBackupMenu, setShowBackupMenu] = useState(false);
+    const pendingHandleRef = useRef(null);
+    const saveTimerRef = useRef(null);
+    const hydratedRef = useRef(false);
+    const localStorageAvailable = isLocalStorageAvailable();
+    const localSaveTimerRef = useRef(null);
+    const localHydratedRef = useRef(false);
+    function emptyForm() {
+      return {
+        taskName: "",
+        machine: "",
+        model: "",
+        serialNumber: "",
+        hostName: "",
+        engineerName: "",
+        customerName: "",
+        site: "",
+        area: "",
+        startDate: todayISO(),
+        openDate: todayISO(),
+        closeDate: "",
+        status: "pending",
+        priority: "medium",
+        description: "",
+        remarks: "",
+        gstNumber: ""
+      };
+    }
+    const uniq = (arr) => Array.from(new Set(arr));
+    const addFns = {
+      machine: (v) => setMachines((p) => uniq([...p, v])),
+      model: (v) => setModels((p) => uniq([...p, v])),
+      serial: (v) => setSerials((p) => uniq([...p, v])),
+      host: (v) => setHosts((p) => uniq([...p, v])),
+      engineer: (v) => setEngineers((p) => uniq([...p, v])),
+      customer: (v) => setCustomers((p) => uniq([...p, v])),
+      site: (v) => setSites((p) => uniq([...p, v])),
+      area: (v) => setAreas((p) => uniq([...p, v]))
+    };
+    const deleteFns = {
+      machine: (v) => setMachines((p) => p.filter((x) => x !== v)),
+      model: (v) => setModels((p) => p.filter((x) => x !== v)),
+      serial: (v) => setSerials((p) => p.filter((x) => x !== v)),
+      host: (v) => setHosts((p) => p.filter((x) => x !== v)),
+      engineer: (v) => setEngineers((p) => p.filter((x) => x !== v)),
+      customer: (v) => setCustomers((p) => p.filter((x) => x !== v)),
+      site: (v) => setSites((p) => p.filter((x) => x !== v)),
+      area: (v) => setAreas((p) => p.filter((x) => x !== v))
+    };
+    function matchesFilter(t) {
+      if (statusFilter !== "all" && t.status !== statusFilter) return false;
+      if (dateFilter && ![t.startDate, t.openDate, t.closeDate].includes(dateFilter)) return false;
+      if (monthFilter) {
+        const inMonth = (d) => d && d.slice(0, 7) === monthFilter;
+        if (!inMonth(t.startDate) && !inMonth(t.openDate) && !inMonth(t.closeDate)) return false;
+      }
+      if (myDayOnly) {
+        const today = todayISO();
+        const hasTodayUpdate = (t.updates || []).some((u) => u.date === today);
+        if (t.startDate !== today && t.openDate !== today && !hasTodayUpdate) return false;
+      }
+      if (search.trim()) {
+        const q = search.trim().toLowerCase();
+        const haystack = [t.taskName, t.machine, t.model, t.serialNumber, t.hostName, t.engineerName, t.customerName, t.site, t.area].filter(Boolean).join(" ").toLowerCase();
+        if (!haystack.includes(q)) return false;
+      }
+      return true;
+    }
+    const PRIORITY_RANK = { high: 0, medium: 1, low: 2 };
+    function sortTasks(list) {
+      const arr = [...list];
+      switch (sortBy) {
+        case "oldest":
+          return arr.sort((a, b) => a.id - b.id);
+        case "priority":
+          return arr.sort((a, b) => {
+            var _a, _b;
+            return ((_a = PRIORITY_RANK[a.priority]) != null ? _a : 1) - ((_b = PRIORITY_RANK[b.priority]) != null ? _b : 1);
+          });
+        case "customer":
+          return arr.sort((a, b) => (a.customerName || "").localeCompare(b.customerName || ""));
+        case "engineer":
+          return arr.sort((a, b) => (a.engineerName || "").localeCompare(b.engineerName || ""));
+        default:
+          return arr.sort((a, b) => b.id - a.id);
+      }
+    }
+    const filteredTasks = sortTasks(tasks.filter(matchesFilter));
+    const filterActive = !!(dateFilter || monthFilter || search.trim() || statusFilter !== "all" || myDayOnly);
+    const GROUP_LABELS = {
+      status: (t) => t.status === "pending" ? "Pending" : "Closed",
+      area: (t) => t.area || "No area set",
+      customer: (t) => t.customerName || "No customer set",
+      engineer: (t) => t.engineerName || "Unassigned",
+      priority: (t) => PRIORITY[t.priority] ? PRIORITY[t.priority].label : "No priority set"
+    };
+    function groupTasks(list) {
+      if (groupBy === "none") return [{ label: null, items: list }];
+      const keyFn = GROUP_LABELS[groupBy];
+      const groups = {};
+      const order = [];
+      list.forEach((t) => {
+        const key = keyFn(t);
+        if (!(key in groups)) {
+          groups[key] = [];
+          order.push(key);
+        }
+        groups[key].push(t);
+      });
+      if (groupBy === "status") order.sort((a, b) => (a === "Pending" ? -1 : 1) - (b === "Pending" ? -1 : 1));
+      return order.map((label) => ({ label, items: groups[label] }));
+    }
+    const taskGroups = groupTasks(filteredTasks);
+    const pendingCount = filteredTasks.filter((t) => t.status === "pending").length;
+    const closedCount = filteredTasks.length - pendingCount;
+    function addTask(e) {
+      e.preventDefault();
+      if (!form.taskName.trim() || !form.machine.trim()) {
+        setFormTab("details");
+        return;
+      }
+      const newTask = { id: nextId(), ...form, attachments: [], updates: [] };
+      setTasks((prev) => [newTask, ...prev]);
+      setForm(emptyForm());
+      setFormTab("details");
+      setShowForm(false);
+    }
+    function toggleStatus(id) {
+      setTasks((prev) => prev.map((t) => {
+        if (t.id !== id) return t;
+        const newStatus = t.status === "pending" ? "closed" : "pending";
+        return { ...t, status: newStatus, closeDate: newStatus === "closed" ? t.closeDate || todayISO() : "" };
+      }));
+    }
+    function deleteTask(id) {
+      const idx = tasks.findIndex((x) => x.id === id);
+      if (idx === -1) return;
+      const t = tasks[idx];
+      setTasks((prev) => prev.filter((x) => x.id !== id));
+      const timer = setTimeout(() => {
+        setUndoStack((prev) => prev.filter((e) => e.id !== id));
+      }, 6e3);
+      setUndoStack((prev) => [...prev, { id, task: t, index: idx, timer }]);
+    }
+    function undoDelete(id) {
+      setUndoStack((prev) => {
+        const entry = prev.find((e) => e.id === id);
+        if (entry) {
+          clearTimeout(entry.timer);
+          setTasks((tk) => {
+            const arr = [...tk];
+            arr.splice(Math.min(entry.index, arr.length), 0, entry.task);
+            return arr;
+          });
+        }
+        return prev.filter((e) => e.id !== id);
+      });
+    }
+    function duplicateTask(id) {
+      const t = tasks.find((x) => x.id === id);
+      if (!t) return;
+      const copy = { ...t, id: nextId(), taskName: `${t.taskName} (copy)`, status: "pending", closeDate: "", startDate: todayISO(), openDate: todayISO(), updates: [], attachments: [] };
+      setTasks((prev) => [copy, ...prev]);
+    }
+    function bulkCloseSelected() {
+      setTasks((prev) => prev.map((t) => selectedIds.includes(t.id) ? { ...t, status: "closed", closeDate: t.closeDate || todayISO() } : t));
+      setSelectedIds([]);
+    }
+    function bulkDeleteSelected() {
+      if (!window.confirm(`Delete ${selectedIds.length} selected task(s)? This can't be undone.`)) return;
+      setTasks((prev) => prev.filter((t) => !selectedIds.includes(t.id)));
+      setSelectedIds([]);
+    }
+    function bulkExportSelected(format) {
+      const list = tasks.filter((t) => selectedIds.includes(t.id));
+      if (format === "csv") exportCSV(list);
+      else exportExcel(list);
+    }
+    function updateTaskField(id, field, value) {
+      setTasks((prev) => prev.map((t) => t.id === id ? { ...t, [field]: value } : t));
+    }
+    function addAttachments(id, fileList) {
+      Array.from(fileList || []).forEach((file) => {
+        const reader = new FileReader();
+        reader.onload = () => {
+          const att = { id: nextId(), name: file.name, type: file.type, size: file.size, dataUrl: reader.result };
+          setTasks((prev) => prev.map((t) => t.id === id ? { ...t, attachments: [...t.attachments || [], att] } : t));
+        };
+        reader.readAsDataURL(file);
+      });
+    }
+    function removeAttachment(taskId, attId) {
+      setTasks((prev) => prev.map((t) => t.id === taskId ? { ...t, attachments: (t.attachments || []).filter((a) => a.id !== attId) } : t));
+    }
+    function addUpdate(id) {
+      const draft = updateDraft[id] || {};
+      const text = (draft.text || "").trim();
+      if (!text) return;
+      const date = draft.date || todayISO();
+      const isToday = date === todayISO();
+      const time = isToday ? (/* @__PURE__ */ new Date()).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" }) : "\u2014";
+      setTasks((prev) => prev.map(
+        (t) => t.id === id ? { ...t, updates: [...t.updates, { id: nextId(), date, time, text }] } : t
+      ));
+      setUpdateDraft((prev) => ({ ...prev, [id]: { text: "", date: todayISO() } }));
+    }
+    function editUpdateField(taskId, updateId, field, value) {
+      setTasks((prev) => prev.map(
+        (t) => t.id === taskId ? { ...t, updates: t.updates.map((u) => u.id === updateId ? { ...u, [field]: value } : u) } : t
+      ));
+    }
+    function deleteUpdateEntry(taskId, updateId) {
+      setTasks((prev) => prev.map(
+        (t) => t.id === taskId ? { ...t, updates: t.updates.filter((u) => u.id !== updateId) } : t
+      ));
+    }
+    function printSingleTask(task) {
+      setPrintTask(task);
+      document.body.classList.add("printing-task");
+      setTimeout(() => window.print(), 50);
+    }
+    function escapeHtml(s) {
+      return String(s == null ? "" : s)
+        .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;").replace(/\n/g, "<br/>");
+    }
+    function exportTaskWord(task) {
+      const wt = wordTemplate;
+      const pr = PRIORITY[task.priority];
+      const sortedUpdates = [...task.updates].sort((a, b) => (a.date || "").localeCompare(b.date || ""));
+      const updatesHtml = sortedUpdates.length
+        ? sortedUpdates.map((u) => `<p style="margin:0 0 10px 0;"><span style="font-size:10.5pt;color:#0e7490;font-weight:bold;">${fmtDate(u.date)} &middot; ${escapeHtml(u.time)}</span><br/><span style="font-size:11pt;">${escapeHtml(u.text)}</span></p>`).join("")
+        : `<p style="font-size:11pt;color:#666;">No updates logged yet.</p>`;
+      const row = (label1, val1, label2, val2) => `<tr><td style="border:1px solid #ccc;padding:6px 10px;background:#f5f5f5;font-weight:bold;font-size:10.5pt;width:22%;">${label1}</td><td style="border:1px solid #ccc;padding:6px 10px;font-size:10.5pt;width:28%;">${escapeHtml(val1)}</td><td style="border:1px solid #ccc;padding:6px 10px;background:#f5f5f5;font-weight:bold;font-size:10.5pt;width:22%;">${label2}</td><td style="border:1px solid #ccc;padding:6px 10px;font-size:10.5pt;width:28%;">${escapeHtml(val2)}</td></tr>`;
+      const dash = "\u2014";
+      const detailsTable = wt.includeDetailsTable ? `<table style="border-collapse:collapse;width:100%;margin:14px 0;">
+        ${row("Machine", task.machine || dash, "Model", task.model || dash)}
+        ${row("Serial Number", task.serialNumber || dash, "Host Name", task.hostName || dash)}
+        ${row("Engineer", task.engineerName || dash, "Customer", task.customerName || dash)}
+        ${row("Site", task.site || dash, "Area", task.area || dash)}
+        ${row("Status", STATUS[task.status].label, "Priority", pr ? pr.label : dash)}
+        ${row("Start Date", fmtDate(task.startDate), "Close Date", task.closeDate ? fmtDate(task.closeDate) : dash)}
+        ${wt.includeGst && task.gstNumber ? row("GST Number", task.gstNumber, "", "") : ""}
+      </table>` : "";
+      const logoHtml = wt.includeLogo && logo ? `<img src="${logo}" style="height:46px;margin-bottom:10px;" />` : "";
+      const sectionTitle = (t) => `<div style="font-size:11.5pt;font-weight:bold;text-transform:uppercase;color:#444;border-bottom:1px solid #ccc;padding-bottom:3px;margin:18px 0 8px 0;">${t}</div>`;
+      const headerBlock = wt.headerText ? `<p style="font-size:10pt;color:#666;margin:0 0 12px 0;">${escapeHtml(wt.headerText)}</p>` : "";
+      const footerBlock = wt.footerText ? `<p style="font-size:10pt;color:#666;margin-top:24px;border-top:1px solid #ccc;padding-top:8px;">${escapeHtml(wt.footerText)}</p>` : "";
+      const attachmentsBlock = wt.includeAttachmentsList && (task.attachments || []).length
+        ? sectionTitle("Attachments") + `<p style="font-size:11pt;">${task.attachments.map((a) => escapeHtml(a.name)).join("<br/>")}</p>`
+        : "";
+      const signatureBlock = wt.includeSignatureBlock
+        ? `<table style="width:100%;margin-top:36px;"><tr><td style="width:50%;padding-right:20px;"><div style="border-top:1px solid #333;margin-top:36px;padding-top:4px;font-size:10pt;">Engineer Signature</div></td><td style="width:50%;padding-left:20px;"><div style="border-top:1px solid #333;margin-top:36px;padding-top:4px;font-size:10pt;">Customer Signature</div></td></tr></table>`
+        : "";
+      const html = `<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40">
+      <head><meta charset="utf-8">
+      <style>
+        body { font-family: Calibri, Arial, sans-serif; color: #1a1a1a; }
+        h1 { font-size: 15pt; color: #555; margin: 0 0 2px 0; }
+        h2 { font-size: 18pt; margin: 0 0 14px 0; }
+      </style>
+      </head>
+      <body>
+        ${logoHtml}
+        <h1>${escapeHtml(appTitle)}</h1>
+        ${headerBlock}
+        <h2>${escapeHtml(task.taskName)}</h2>
+        ${detailsTable}
+        ${wt.includeDescription && task.description ? sectionTitle("Description / Work Done") + `<p style="font-size:11pt;">${escapeHtml(task.description)}</p>` : ""}
+        ${wt.includeRemarks && task.remarks ? sectionTitle("Remarks") + `<p style="font-size:11pt;">${escapeHtml(task.remarks)}</p>` : ""}
+        ${wt.includeUpdates ? sectionTitle("Update History") + updatesHtml : ""}
+        ${attachmentsBlock}
+        ${signatureBlock}
+        ${footerBlock}
+      </body>
+      </html>`;
+      const blob = new Blob(["\ufeff", html], { type: "application/msword" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `${task.taskName.replace(/[^a-z0-9]+/gi, "-").toLowerCase()}.doc`;
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+    useEffect(() => {
+      const cleanup = () => {
+        document.body.classList.remove("printing-task");
+        setPrintTask(null);
+      };
+      window.addEventListener("afterprint", cleanup);
+      return () => window.removeEventListener("afterprint", cleanup);
+    }, []);
+    useEffect(() => {
+      const onKeyDown = (e) => {
+        const tag = e.target && e.target.tagName || "";
+        const typing = tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT" || e.target && e.target.isContentEditable;
+        if (typing || locked) return;
+        if (e.key === "n" || e.key === "N") {
+          e.preventDefault();
+          setShowForm(true);
+          setTimeout(() => newTaskInputRef.current && newTaskInputRef.current.focus(), 50);
+        }
+      };
+      window.addEventListener("keydown", onKeyDown);
+      return () => window.removeEventListener("keydown", onKeyDown);
+    }, [locked]);
+    function handleLogoChange(e) {
+      const file = e.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = () => setLogo(reader.result);
+      reader.readAsDataURL(file);
+    }
+    function handleWallpaperChange(e) {
+      const file = e.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = () => setWallpaper(reader.result);
+      reader.readAsDataURL(file);
+    }
+    function removeWallpaper() {
+      setWallpaper(null);
+      if (wallpaperInputRef.current) wallpaperInputRef.current.value = "";
+    }
+    function taskExportRows(list) {
+      return list.map((t) => ({
+        "Task Name": t.taskName,
+        "Machine": t.machine,
+        "Model": t.model,
+        "Serial Number": t.serialNumber,
+        "Host Name": t.hostName,
+        "Engineer Name": t.engineerName,
+        "Customer Name": t.customerName,
+        "Site": t.site,
+        "Area": t.area,
+        "Priority": PRIORITY[t.priority] ? PRIORITY[t.priority].label : "",
+        "Status": STATUS[t.status].label,
+        "Start Date": fmtDate(t.startDate),
+        "Open Date": fmtDate(t.openDate),
+        "Close Date": t.closeDate ? fmtDate(t.closeDate) : "",
+        "Description / Work Done": t.description || "",
+        "Remarks": t.remarks || "",
+        "GST Number": t.gstNumber || "",
+        "Update Count": t.updates.length,
+        "Attachment Count": (t.attachments || []).length
+      }));
+    }
+    function exportExcel(list) {
+      const rows = taskExportRows(list || filteredTasks);
+      const updateRows = [];
+      (list || filteredTasks).forEach((t) => t.updates.forEach((u) => updateRows.push({
+        "Task Name": t.taskName,
+        "Machine": t.machine,
+        "Engineer Name": t.engineerName,
+        "Date": fmtDate(u.date),
+        "Time": u.time,
+        "Update": u.text
+      })));
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(rows), "Tasks");
+      XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(updateRows.length ? updateRows : [{ Note: "No updates logged yet" }]), "Updates");
+      const stamp = (/* @__PURE__ */ new Date()).toISOString().slice(0, 10);
+      XLSX.writeFile(wb, `${appTitle.replace(/\s+/g, "-").toLowerCase()}-report-${stamp}.xlsx`);
+    }
+    function exportCSV(list) {
+      const rows = taskExportRows(list || filteredTasks);
+      if (rows.length === 0) {
+        window.alert("No tasks to export.");
+        return;
+      }
+      const headers = Object.keys(rows[0]);
+      const escape = (v) => `"${String(v).replace(/"/g, '""')}"`;
+      const csv = [headers.map(escape).join(","), ...rows.map((r) => headers.map((h) => escape(r[h])).join(","))].join("\n");
+      const blob = new Blob([csv], { type: "text/csv" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `${appTitle.replace(/\s+/g, "-").toLowerCase()}-report-${(/* @__PURE__ */ new Date()).toISOString().slice(0, 10)}.csv`;
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+    function currentBackupData() {
+      return { appTitle, logo, wallpaper, wallpaperOpacity, wordTemplate, tasks, machines, models, serials, hosts, engineers, customers, sites, areas, themeKey, accentColor, idCounter };
+    }
+    function applyBackupData(data) {
+      if (typeof data.appTitle === "string") setAppTitle(data.appTitle);
+      if ("logo" in data) setLogo(data.logo);
+      if ("wallpaper" in data) setWallpaper(data.wallpaper);
+      if (typeof data.wallpaperOpacity === "number") setWallpaperOpacity(data.wallpaperOpacity);
+      if (data.wordTemplate && typeof data.wordTemplate === "object") setWordTemplate((prev) => ({ ...prev, ...data.wordTemplate }));
+      if (Array.isArray(data.tasks)) {
+        setTasks(data.tasks);
+        const ids = data.tasks.flatMap((t) => [t.id, ...(t.updates || []).map((u) => u.id), ...(t.attachments || []).map((a) => a.id)]).filter((n) => typeof n === "number");
+        idCounter = Math.max(idCounter, ...ids, 0) + 1;
+      }
+      if (Array.isArray(data.machines)) setMachines(data.machines);
+      if (Array.isArray(data.models)) setModels(data.models);
+      if (Array.isArray(data.serials)) setSerials(data.serials);
+      if (Array.isArray(data.hosts)) setHosts(data.hosts);
+      if (Array.isArray(data.engineers)) setEngineers(data.engineers);
+      if (Array.isArray(data.customers)) setCustomers(data.customers);
+      if (Array.isArray(data.sites)) setSites(data.sites);
+      if (Array.isArray(data.areas)) setAreas(data.areas);
+      if (data.themeKey && THEMES[data.themeKey]) setThemeKey(data.themeKey);
+      if (typeof data.accentColor === "string") setAccentColor(data.accentColor);
+    }
+
+    useEffect(() => {
+      if (!localStorageAvailable) return;
+      try {
+        const raw = localStorage.getItem(LOCAL_STORAGE_KEY);
+        if (raw) {
+          const data = JSON.parse(raw);
+          applyBackupData(data);
+        }
+      } catch (err) {
+        /* ignore corrupt or inaccessible local data */
+      } finally {
+        localHydratedRef.current = true;
+      }
+    }, []);
+
+    useEffect(() => {
+      if (!localStorageAvailable || !localHydratedRef.current) return;
+      if (localSaveTimerRef.current) clearTimeout(localSaveTimerRef.current);
+      localSaveTimerRef.current = setTimeout(() => {
+        try {
+          localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(currentBackupData()));
+        } catch (err) {
+          /* storage full or blocked — silently skip */
+        }
+      }, 800);
+      return () => clearTimeout(localSaveTimerRef.current);
+    }, [tasks, machines, models, serials, hosts, engineers, customers, sites, areas, appTitle, logo, wallpaper, wallpaperOpacity, wordTemplate, themeKey, accentColor]);
+
+    const [driveClientId, setDriveClientId] = useState(() => lsGet("ts-drive-client-id") || "");
+    const [driveEnabled, setDriveEnabled] = useState(() => lsGet("ts-drive-enabled") === "1");
+    const [driveStatus, setDriveStatus] = useState("off");
+    const [driveMessage, setDriveMessage] = useState("");
+    const [showDrive, setShowDrive] = useState(false);
+    const [driveTick, setDriveTick] = useState(0);
+    const driveClientIdRef = useRef(driveClientId);
+    driveClientIdRef.current = driveClientId;
+    const latestDataRef = useRef(null);
+    latestDataRef.current = currentBackupData();
+    const applyBackupRef = useRef(null);
+    applyBackupRef.current = applyBackupData;
+    const driveStatusRef = useRef(driveStatus);
+    driveStatusRef.current = driveStatus;
+    const driveBusyRef = useRef(false);
+    const drivePendingRef = useRef(false);
+    const driveTimerRef = useRef(null);
+    const driveEngineRef = useRef(null);
+    if (!driveEngineRef.current) {
+      driveEngineRef.current = makeDriveEngine({
+        drive: DriveSync,
+        getData: () => latestDataRef.current,
+        applyData: (d) => applyBackupRef.current(d),
+        confirmConflict: () => window.confirm("Google Drive has data that differs from this device.\n\nOK = load the Drive version (replaces the data on this device)\nCancel = keep this device's data and overwrite Drive"),
+        getClientId: () => driveClientIdRef.current.trim(),
+        storage: { get: lsGet, set: lsSet }
+      });
+    }
+    function handleDriveError(e) {
+      const msg = e && e.message || "";
+      if (msg === "NEEDS_RECONNECT") {
+        setDriveStatus("needs-reconnect");
+        setDriveMessage("Google needs you to sign in again. Click Reconnect.");
+      } else if (msg === "DRIVE_FILE_MISSING") {
+        DriveSync.fileId = null;
+        setDriveStatus("error");
+        setDriveMessage("The Drive file couldn't be found. Click Reconnect to recreate it.");
+      } else if (e instanceof TypeError) {
+        setDriveStatus("offline");
+        setDriveMessage("Can't reach Google Drive right now. It will retry automatically.");
+      } else {
+        setDriveStatus("error");
+        setDriveMessage(msg || "Something went wrong with Drive sync.");
+      }
+    }
+    async function driveRun(force) {
+      if (!force && driveStatusRef.current === "needs-reconnect") return;
+      if (driveBusyRef.current) { drivePendingRef.current = true; return; }
+      driveBusyRef.current = true;
+      try {
+        setDriveStatus("syncing");
+        await driveEngineRef.current.reconcile();
+        setDriveStatus("synced");
+        setDriveMessage("");
+      } catch (e) {
+        handleDriveError(e);
+      } finally {
+        driveBusyRef.current = false;
+        if (drivePendingRef.current) { drivePendingRef.current = false; setDriveTick((t) => t + 1); }
+      }
+    }
+    async function driveConnect() {
+      if (isFileProtocol) {
+        setDriveStatus("error");
+        setDriveMessage("Open the app with the launcher (localhost) or a web address first.");
+        return;
+      }
+      const id = driveClientId.trim();
+      if (!id) {
+        setDriveStatus("error");
+        setDriveMessage("Paste your Google Client ID first.");
+        return;
+      }
+      lsSet("ts-drive-client-id", id);
+      setDriveStatus("syncing");
+      setDriveMessage("");
+      try {
+        await DriveSync.authorize(id, true);
+      } catch (e) {
+        handleDriveError(e);
+        return;
+      }
+      lsSet("ts-drive-enabled", "1");
+      setDriveEnabled(true);
+      await driveRun(true);
+    }
+    function driveDisconnect() {
+      driveEngineRef.current.reset();
+      lsSet("ts-drive-enabled", "0");
+      setDriveEnabled(false);
+      setDriveStatus("off");
+      setDriveMessage("");
+    }
+    const driveFnsRef = useRef({});
+    driveFnsRef.current = { sync: () => driveRun(false) };
+    useEffect(() => {
+      if (showDrive && !isFileProtocol) DriveSync.loadGis().catch(() => {});
+    }, [showDrive]);
+    useEffect(() => {
+      if (!driveEnabled || isFileProtocol) return;
+      if (driveTimerRef.current) clearTimeout(driveTimerRef.current);
+      driveTimerRef.current = setTimeout(() => driveFnsRef.current.sync(), 2500);
+      return () => clearTimeout(driveTimerRef.current);
+    }, [tasks, machines, models, serials, hosts, engineers, customers, sites, areas, appTitle, logo, wordTemplate, themeKey, accentColor, driveEnabled, driveTick]);
+    useEffect(() => {
+      if (!driveEnabled || isFileProtocol) return;
+      const tick = () => { if (!document.hidden) driveFnsRef.current.sync(); };
+      const iv = setInterval(tick, 30000);
+      document.addEventListener("visibilitychange", tick);
+      return () => { clearInterval(iv); document.removeEventListener("visibilitychange", tick); };
+    }, [driveEnabled]);
+    const driveDotColor = { synced: "#34d399", syncing: "#fbbf24", "needs-reconnect": "#fbbf24", offline: "#fbbf24", error: "#f87171" }[driveStatus] || "#64748b";
+
+    function exportBackup() {
+      const data = currentBackupData();
+      const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `${appTitle.replace(/\s+/g, "-").toLowerCase()}-backup-${(/* @__PURE__ */ new Date()).toISOString().slice(0, 10)}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+    function importBackup(e) {
+      const file = e.target.files[0];
+      if (!file) return;
+      if (!window.confirm("Import this backup? It will replace all current tasks and lists.")) {
+        e.target.value = "";
+        return;
+      }
+      const reader = new FileReader();
+      reader.onload = () => {
+        try {
+          applyBackupData(JSON.parse(reader.result));
+        } catch (err) {
+          window.alert("That file doesn't look like a valid backup.");
+        }
+      };
+      reader.readAsText(file);
+      e.target.value = "";
+    }
+    function exportMachineList() {
+      const data = { machines, models, serials, hosts, engineers, customers, sites, areas };
+      const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `machine-master-list-${(/* @__PURE__ */ new Date()).toISOString().slice(0, 10)}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+    function importMachineList(e) {
+      const file = e.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = () => {
+        try {
+          const data = JSON.parse(reader.result);
+          if (Array.isArray(data.machines)) setMachines((p) => uniq([...p, ...data.machines]));
+          if (Array.isArray(data.models)) setModels((p) => uniq([...p, ...data.models]));
+          if (Array.isArray(data.serials)) setSerials((p) => uniq([...p, ...data.serials]));
+          if (Array.isArray(data.hosts)) setHosts((p) => uniq([...p, ...data.hosts]));
+          if (Array.isArray(data.engineers)) setEngineers((p) => uniq([...p, ...data.engineers]));
+          if (Array.isArray(data.customers)) setCustomers((p) => uniq([...p, ...data.customers]));
+          if (Array.isArray(data.sites)) setSites((p) => uniq([...p, ...data.sites]));
+          if (Array.isArray(data.areas)) setAreas((p) => uniq([...p, ...data.areas]));
+        } catch (err) {
+          window.alert("That file doesn't look like a valid machine list.");
+        }
+      };
+      reader.readAsText(file);
+      e.target.value = "";
+    }
+    async function saveToHandle(handle) {
+      try {
+        const writable = await handle.createWritable();
+        await writable.write(JSON.stringify(currentBackupData(), null, 2));
+        await writable.close();
+        setSaveStatus(`Saved ${(/* @__PURE__ */ new Date()).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })}`);
+      } catch (err) {
+        setSaveStatus("Save failed \u2014 reconnect the file");
+      }
+    }
+    async function loadFromHandle(handle) {
+      const file = await handle.getFile();
+      const text = await file.text();
+      applyBackupData(JSON.parse(text));
+    }
+    async function chooseBackupFile() {
+      if (!fsSupported) {
+        window.alert("Your browser doesn't support auto-saving to a file (this needs Chrome or Edge). Use the manual Save/Load JSON buttons instead.");
+        return;
+      }
+      try {
+        const handle = await window.showSaveFilePicker({
+          suggestedName: `${appTitle.replace(/\s+/g, "-").toLowerCase()}-autobackup.json`,
+          types: [{ description: "JSON backup", accept: { "application/json": [".json"] } }]
+        });
+        await saveToHandle(handle);
+        setFileHandle(handle);
+        setNeedsReconnect(false);
+        if (!isFileProtocol) {
+          try {
+            await idbSet("backupFile", handle);
+          } catch (err) {
+          }
+        }
+      } catch (err) {
+      }
+    }
+    async function reconnectBackup() {
+      const handle = pendingHandleRef.current;
+      if (!handle) return;
+      try {
+        const perm = await handle.requestPermission({ mode: "readwrite" });
+        if (perm === "granted") {
+          hydratedRef.current = true;
+          await loadFromHandle(handle);
+          setFileHandle(handle);
+          setNeedsReconnect(false);
+        } else {
+          window.alert("Permission wasn't granted, so auto-save can't resume.");
+        }
+      } catch (err) {
+        window.alert("Couldn't reconnect to that file. Try choosing it again.");
+      }
+    }
+    async function disconnectBackup() {
+      setFileHandle(null);
+      setSaveStatus("");
+      setShowBackupMenu(false);
+      if (!isFileProtocol) {
+        try {
+          await idbDelete("backupFile");
+        } catch (err) {
+        }
+      }
+    }
+    useEffect(() => {
+      if (!fsSupported || isFileProtocol) return;
+      (async () => {
+        try {
+          const handle = await idbGet("backupFile");
+          if (!handle) return;
+          const perm = await handle.queryPermission({ mode: "readwrite" });
+          if (perm === "granted") {
+            hydratedRef.current = true;
+            await loadFromHandle(handle);
+            setFileHandle(handle);
+          } else {
+            pendingHandleRef.current = handle;
+            setNeedsReconnect(true);
+          }
+        } catch (err) {
+        }
+      })();
+    }, []);
+    useEffect(() => {
+      if (!fileHandle) return;
+      if (!hydratedRef.current) {
+        hydratedRef.current = true;
+        return;
+      }
+      if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
+      saveTimerRef.current = setTimeout(() => saveToHandle(fileHandle), 1200);
+      return () => clearTimeout(saveTimerRef.current);
+    }, [tasks, machines, models, serials, hosts, engineers, customers, sites, areas, appTitle, logo, wallpaper, wallpaperOpacity, wordTemplate, themeKey, accentColor, fileHandle]);
+    function setupPin() {
+      const p1 = window.prompt("Create a PIN (4+ digits):");
+      if (!p1 || !p1.trim()) return;
+      const p2 = window.prompt("Confirm PIN:");
+      if (p1 !== p2) {
+        window.alert("PINs didn't match \u2014 try again.");
+        return;
+      }
+      setPinCode(p1.trim());
+      setShowSecurityMenu(false);
+      setLocked(true);
+    }
+    function removePin() {
+      const check = window.prompt("Enter current PIN to remove it:");
+      if (check !== pinCode) {
+        window.alert("Incorrect PIN.");
+        return;
+      }
+      setPinCode(null);
+      setLocked(false);
+      setShowSecurityMenu(false);
+    }
+    function lockNow() {
+      setShowSecurityMenu(false);
+      setLocked(true);
+    }
+    function attemptUnlock(e) {
+      e.preventDefault();
+      if (pinEntry === pinCode) {
+        setLocked(false);
+        setPinEntry("");
+        setPinError("");
+      } else {
+        setPinError("Incorrect PIN. Try again.");
+      }
+    }
+    if (locked) {
+      return /* @__PURE__ */ React.createElement("div", { className: "min-h-screen flex items-center justify-center", style: { backgroundColor: theme.app } }, /* @__PURE__ */ React.createElement("form", { onSubmit: attemptUnlock, className: "w-full max-w-xs p-6 rounded-xl border", style: { backgroundColor: theme.panel, borderColor: theme.border } }, /* @__PURE__ */ React.createElement("div", { className: "flex flex-col items-center text-center mb-4" }, /* @__PURE__ */ React.createElement("div", { className: "w-12 h-12 rounded-xl flex items-center justify-center mb-3", style: { backgroundColor: accentColor + "22" } }, /* @__PURE__ */ React.createElement(Lock, { size: 22, style: { color: accentColor } })), /* @__PURE__ */ React.createElement("h1", { className: "text-slate-100 font-semibold text-sm" }, appTitle, " is locked"), /* @__PURE__ */ React.createElement("p", { className: "text-slate-500 text-[11px] mt-1" }, "Enter your PIN to continue")), /* @__PURE__ */ React.createElement(
+        "input",
+        {
+          autoFocus: true,
+          type: "password",
+          inputMode: "numeric",
+          value: pinEntry,
+          onChange: (e) => {
+            setPinEntry(e.target.value);
+            setPinError("");
+          },
+          className: "w-full bg-[#0b0f14] border border-slate-700 rounded-lg px-3 py-2 text-sm text-center tracking-[0.3em] text-slate-100 focus:outline-none focus:ring-2 focus:ring-cyan-400/40 mb-2",
+          placeholder: "\u2022\u2022\u2022\u2022"
+        }
+      ), pinError && /* @__PURE__ */ React.createElement("p", { className: "text-red-400 text-[11px] text-center mb-2" }, pinError), /* @__PURE__ */ React.createElement("button", { type: "submit", className: "w-full font-medium text-sm px-4 py-2 rounded-lg text-[#06222b]", style: { backgroundColor: accentColor } }, "Unlock"), /* @__PURE__ */ React.createElement("p", { className: "text-slate-600 text-[10px] text-center mt-3 leading-relaxed" }, "This is a simple screen lock for this browser tab only \u2014 it doesn't encrypt your data.")));
+    }
+    const formTabs = [
+      { key: "details", label: "Details" },
+      { key: "description", label: "Description" },
+      { key: "remarks", label: "Remarks" },
+      { key: "gst", label: "GST No." }
+    ];
+    return /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement("div", { className: "app-shell min-h-screen text-slate-200", style: wallpaper ? { backgroundImage: `linear-gradient(${hexToRgba(theme.app, wallpaperOpacity)}, ${hexToRgba(theme.app, wallpaperOpacity)}), url(${wallpaper})`, backgroundSize: "cover", backgroundPosition: "center", backgroundAttachment: "fixed", backgroundRepeat: "no-repeat" } : { backgroundColor: theme.app } }, showWordTemplate && /* @__PURE__ */ React.createElement(WordTemplateModal, { wordTemplate, setWordTemplate, onClose: () => setShowWordTemplate(false), accentColor }), showDrive && /* @__PURE__ */ React.createElement(DriveSyncModal, { clientId: driveClientId, setClientId: (v) => { setDriveClientId(v); lsSet("ts-drive-client-id", v.trim()); }, enabled: driveEnabled, status: driveStatus, message: driveMessage, onConnect: driveConnect, onSyncNow: () => driveRun(true), onDisconnect: driveDisconnect, onClose: () => setShowDrive(false), accentColor, isFile: isFileProtocol }), showManage && /* @__PURE__ */ React.createElement(
+      ManageListsModal,
+      {
+        machines,
+        models,
+        serials,
+        engineers,
+        customers,
+        sites,
+        areas,
+        hosts,
+        addFns,
+        deleteFns,
+        onClose: () => setShowManage(false),
+        onExportList: exportMachineList,
+        onImportList: importMachineList,
+        machineListInputRef
+      }
+    ), /* @__PURE__ */ React.createElement("header", { className: "border-b backdrop-blur sticky top-0 z-10", style: { ...(wallpaper ? glass(theme.header, 0.55) : { backgroundColor: theme.header + "cc" }), borderColor: theme.border } }, /* @__PURE__ */ React.createElement("div", { className: "max-w-5xl mx-auto px-5 py-5 flex items-center justify-between gap-3 flex-wrap" }, /* @__PURE__ */ React.createElement("div", { className: "flex items-center gap-4 min-w-0" }, /* @__PURE__ */ React.createElement("input", { type: "file", accept: "image/*", ref: logoInputRef, onChange: handleLogoChange, className: "hidden" }), /* @__PURE__ */ React.createElement(
+      "button",
+      {
+        onClick: () => logoInputRef.current && logoInputRef.current.click(),
+        className: "w-24 h-24 rounded-2xl flex items-center justify-center overflow-hidden shrink-0 ring-1",
+        style: { backgroundColor: accentColor + "1a", borderColor: accentColor, boxShadow: `inset 0 0 0 1px ${accentColor}55` },
+        title: "Click to add / change logo"
+      },
+      logo ? /* @__PURE__ */ React.createElement("img", { src: logo, alt: "Logo", className: "w-full h-full object-cover" }) : /* @__PURE__ */ React.createElement(ImagePlus, { size: 34, style: { color: accentColor } })
+    ), /* @__PURE__ */ React.createElement("div", { className: "min-w-0" }, editingTitle ? /* @__PURE__ */ React.createElement(
+      "input",
+      {
+        autoFocus: true,
+        value: appTitle,
+        onChange: (e) => setAppTitle(e.target.value),
+        onBlur: () => setEditingTitle(false),
+        onKeyDown: (e) => {
+          if (e.key === "Enter") setEditingTitle(false);
+        },
+        className: "text-xl font-semibold bg-transparent border-b text-slate-100 tracking-tight focus:outline-none",
+        style: { borderColor: accentColor }
+      }
+    ) : /* @__PURE__ */ React.createElement("button", { onClick: () => setEditingTitle(true), className: "flex items-center gap-1.5 group" }, /* @__PURE__ */ React.createElement("h1", { className: "text-xl font-semibold text-slate-100 tracking-tight truncate" }, appTitle), /* @__PURE__ */ React.createElement(Pencil, { size: 13, className: "text-slate-600 group-hover:text-slate-400 shrink-0" })), /* @__PURE__ */ React.createElement("p", { className: "text-[11px] text-slate-500 font-mono-data" }, (/* @__PURE__ */ new Date()).toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric", year: "numeric" })))), /* @__PURE__ */ React.createElement("div", { className: "flex items-center gap-2 flex-wrap no-print" }, /* @__PURE__ */ React.createElement("div", { className: "relative" }, /* @__PURE__ */ React.createElement("button", { onClick: () => {
+      setShowThemeMenu((s) => !s);
+      setShowSecurityMenu(false);
+      setShowBackupMenu(false);
+    }, className: "flex items-center gap-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 font-medium text-sm px-3 py-2 rounded-lg transition-colors", title: "Theme & accent color" }, /* @__PURE__ */ React.createElement(Palette, { size: 16 })), showThemeMenu && /* @__PURE__ */ React.createElement("div", { className: "absolute right-0 mt-2 w-64 bg-[#111826] border border-slate-800 rounded-xl p-4 z-20 shadow-xl" }, /* @__PURE__ */ React.createElement("p", { className: "text-[11px] uppercase tracking-wide text-slate-500 mb-2" }, "Background theme"), /* @__PURE__ */ React.createElement("div", { className: "grid grid-cols-4 gap-2 mb-4" }, Object.values(THEMES).map((th) => /* @__PURE__ */ React.createElement(
+      "button",
+      {
+        key: th.key,
+        onClick: () => setThemeKey(th.key),
+        title: th.label,
+        className: `w-9 h-9 rounded-lg border-2 ${themeKey === th.key ? "border-white" : "border-transparent"}`,
+        style: { backgroundColor: th.panel }
+      }
+    ))), /* @__PURE__ */ React.createElement("p", { className: "text-[11px] uppercase tracking-wide text-slate-500 mb-2" }, "Accent color"), /* @__PURE__ */ React.createElement("input", { type: "color", value: accentColor, onChange: (e) => setAccentColor(e.target.value), className: "w-full h-9 rounded-lg bg-transparent cursor-pointer mb-4" }), /* @__PURE__ */ React.createElement("p", { className: "text-[11px] uppercase tracking-wide text-slate-500 mb-2" }, "Wallpaper"), /* @__PURE__ */ React.createElement("input", { type: "file", accept: "image/*", ref: wallpaperInputRef, onChange: handleWallpaperChange, className: "hidden" }), wallpaper ? /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("img", { src: wallpaper, alt: "Wallpaper preview", className: "w-full h-16 object-cover rounded-lg mb-2" }), /* @__PURE__ */ React.createElement("label", { className: "block text-[10px] text-slate-500 mb-1" }, "Overlay darkness"), /* @__PURE__ */ React.createElement("input", { type: "range", min: "0.3", max: "0.95", step: "0.05", value: wallpaperOpacity, onChange: (e) => setWallpaperOpacity(parseFloat(e.target.value)), className: "w-full mb-2" }), /* @__PURE__ */ React.createElement("div", { className: "flex gap-2" }, /* @__PURE__ */ React.createElement("button", { onClick: () => wallpaperInputRef.current && wallpaperInputRef.current.click(), className: "flex-1 text-[12px] bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg py-1.5" }, "Change"), /* @__PURE__ */ React.createElement("button", { onClick: removeWallpaper, className: "flex-1 text-[12px] text-red-400 hover:text-red-300 bg-slate-800 hover:bg-slate-700 rounded-lg py-1.5" }, "Remove"))) : /* @__PURE__ */ React.createElement("button", { onClick: () => wallpaperInputRef.current && wallpaperInputRef.current.click(), className: "w-full text-[12px] bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg py-1.5" }, "Upload wallpaper image"))), /* @__PURE__ */ React.createElement("div", { className: "relative" }, /* @__PURE__ */ React.createElement("button", { onClick: () => {
+      setShowSecurityMenu((s) => !s);
+      setShowThemeMenu(false);
+      setShowBackupMenu(false);
+    }, className: "flex items-center gap-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 font-medium text-sm px-3 py-2 rounded-lg transition-colors", title: "Screen lock" }, /* @__PURE__ */ React.createElement(Lock, { size: 16 })), showSecurityMenu && /* @__PURE__ */ React.createElement("div", { className: "absolute right-0 mt-2 w-60 bg-[#111826] border border-slate-800 rounded-xl p-4 z-20 shadow-xl text-[12px]" }, pinCode ? /* @__PURE__ */ React.createElement("div", { className: "space-y-2" }, /* @__PURE__ */ React.createElement("p", { className: "text-slate-300" }, "A PIN is set for this session."), /* @__PURE__ */ React.createElement("button", { onClick: lockNow, className: "w-full bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg py-1.5" }, "Lock now"), /* @__PURE__ */ React.createElement("button", { onClick: removePin, className: "w-full text-red-400 hover:text-red-300 rounded-lg py-1.5" }, "Remove PIN")) : /* @__PURE__ */ React.createElement("div", { className: "space-y-2" }, /* @__PURE__ */ React.createElement("p", { className: "text-slate-400" }, "No PIN set. Add one to lock this tab when you're away."), /* @__PURE__ */ React.createElement("button", { onClick: setupPin, className: "w-full bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg py-1.5" }, "Set a PIN")), /* @__PURE__ */ React.createElement("p", { className: "text-slate-600 text-[10px] mt-3 leading-relaxed" }, "Basic tab lock only \u2014 not encryption, and won't survive a page refresh."))), /* @__PURE__ */ React.createElement("input", { type: "file", accept: "application/json", ref: backupInputRef, onChange: importBackup, className: "hidden" }), /* @__PURE__ */ React.createElement("div", { className: "relative" }, /* @__PURE__ */ React.createElement(
+      "button",
+      {
+        onClick: () => {
+          setShowBackupMenu((s) => !s);
+          setShowThemeMenu(false);
+          setShowSecurityMenu(false);
+        },
+        className: "flex items-center gap-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 font-medium text-sm px-3 py-2 rounded-lg transition-colors relative",
+        title: "Backup & auto-save"
+      },
+      /* @__PURE__ */ React.createElement(Plug, { size: 16 }),
+      fileHandle && /* @__PURE__ */ React.createElement("span", { className: "absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full bg-emerald-400" }),
+      needsReconnect && /* @__PURE__ */ React.createElement("span", { className: "absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full bg-amber-400" })
+    ), showBackupMenu && /* @__PURE__ */ React.createElement("div", { className: "absolute right-0 mt-2 w-72 bg-[#111826] border border-slate-800 rounded-xl p-4 z-20 shadow-xl text-[12px]" }, fileHandle ? /* @__PURE__ */ React.createElement("div", { className: "space-y-2" }, /* @__PURE__ */ React.createElement("p", { className: "text-slate-300" }, "Auto-saving to ", /* @__PURE__ */ React.createElement("span", { className: "font-mono-data text-emerald-300" }, fileHandle.name)), saveStatus && /* @__PURE__ */ React.createElement("p", { className: "text-slate-500 text-[11px]" }, saveStatus), /* @__PURE__ */ React.createElement("button", { onClick: () => saveToHandle(fileHandle), className: "w-full bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg py-1.5" }, "Save now"), /* @__PURE__ */ React.createElement("button", { onClick: chooseBackupFile, className: "w-full bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg py-1.5" }, "Change file"), /* @__PURE__ */ React.createElement("button", { onClick: disconnectBackup, className: "w-full text-red-400 hover:text-red-300 rounded-lg py-1.5" }, "Disconnect")) : needsReconnect ? /* @__PURE__ */ React.createElement("div", { className: "space-y-2" }, /* @__PURE__ */ React.createElement("p", { className: "text-amber-300" }, "Reconnect to resume auto-saving to ", /* @__PURE__ */ React.createElement("span", { className: "font-mono-data" }, pendingHandleRef.current && pendingHandleRef.current.name)), /* @__PURE__ */ React.createElement("p", { className: "text-slate-500 text-[11px]" }, "Browsers require one click each time you reopen the page \u2014 this is a security rule, not a bug."), /* @__PURE__ */ React.createElement("button", { onClick: reconnectBackup, className: "w-full font-medium rounded-lg py-1.5 text-[#06222b]", style: { backgroundColor: accentColor } }, "Reconnect")) : /* @__PURE__ */ React.createElement("div", { className: "space-y-2" }, /* @__PURE__ */ React.createElement("p", { className: "text-slate-400" }, localStorageAvailable ? "Your data already auto-saves in this browser \u2014 no reconnecting needed on reopen. Connecting a file below is optional, for an external backup copy." : "Pick a file once \u2014 every change will auto-save there, no more manual export."), /* @__PURE__ */ React.createElement("button", { onClick: chooseBackupFile, className: "w-full font-medium rounded-lg py-1.5 text-[#06222b]", style: { backgroundColor: accentColor } }, "Choose backup file\u2026"), !fsSupported && /* @__PURE__ */ React.createElement("p", { className: "text-slate-600 text-[10px]" }, "Auto-save needs Chrome or Edge. Use manual save/load below instead."), fsSupported && isFileProtocol && /* @__PURE__ */ React.createElement("p", { className: "text-slate-600 text-[10px]" }, "Opened as a local file \u2014 this optional file connection needs re-choosing each time you reopen the page, but your task data itself is already saved in the browser regardless.")), /* @__PURE__ */ React.createElement("div", { className: "border-t border-slate-800 mt-3 pt-3 flex gap-2" }, /* @__PURE__ */ React.createElement("button", { onClick: exportBackup, className: "flex-1 text-slate-400 hover:text-slate-200 flex items-center justify-center gap-1.5 bg-slate-800/60 hover:bg-slate-800 rounded-lg py-1.5" }, /* @__PURE__ */ React.createElement(Save, { size: 13 }), " Save .json"), /* @__PURE__ */ React.createElement("button", { onClick: () => backupInputRef.current && backupInputRef.current.click(), className: "flex-1 text-slate-400 hover:text-slate-200 flex items-center justify-center gap-1.5 bg-slate-800/60 hover:bg-slate-800 rounded-lg py-1.5" }, /* @__PURE__ */ React.createElement(UploadIcon, { size: 13 }), " Load .json")))), /* @__PURE__ */ React.createElement("button", { onClick: () => setShowDrive(true), className: "relative flex items-center gap-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 font-medium text-sm px-3 py-2 rounded-lg transition-colors", title: "Google Drive sync" }, /* @__PURE__ */ React.createElement(Cloud, { size: 16 }), driveEnabled && /* @__PURE__ */ React.createElement("span", { className: "absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full", style: { backgroundColor: driveDotColor } })), /* @__PURE__ */ React.createElement("button", { onClick: () => setShowWordTemplate(true), className: "flex items-center gap-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 font-medium text-sm px-3 py-2 rounded-lg transition-colors", title: "Word report template" }, /* @__PURE__ */ React.createElement(FileText, { size: 16 })), /* @__PURE__ */ React.createElement("button", { onClick: () => setShowManage(true), className: "flex items-center gap-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 font-medium text-sm px-3 py-2 rounded-lg transition-colors", title: "Manage predefined values" }, /* @__PURE__ */ React.createElement(Settings, { size: 16 })), /* @__PURE__ */ React.createElement("button", { onClick: () => exportExcel(), className: "flex items-center gap-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 font-medium text-sm px-3.5 py-2 rounded-lg transition-colors", title: "Download Excel report" }, /* @__PURE__ */ React.createElement(Download, { size: 16 }), /* @__PURE__ */ React.createElement("span", { className: "hidden sm:inline" }, "Excel")), /* @__PURE__ */ React.createElement("button", { onClick: () => exportCSV(), className: "flex items-center gap-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 font-medium text-sm px-3.5 py-2 rounded-lg transition-colors", title: "Download CSV report" }, /* @__PURE__ */ React.createElement(Download, { size: 16 }), /* @__PURE__ */ React.createElement("span", { className: "hidden sm:inline" }, "CSV")), /* @__PURE__ */ React.createElement("button", { onClick: () => setShowForm((s) => !s), className: "flex items-center gap-1.5 hover:opacity-90 text-[#06222b] font-medium text-sm px-3.5 py-2 rounded-lg transition-opacity", style: { backgroundColor: accentColor } }, showForm ? /* @__PURE__ */ React.createElement(X, { size: 16 }) : /* @__PURE__ */ React.createElement(Plus, { size: 16 }), showForm ? "Cancel" : "New task"))), /* @__PURE__ */ React.createElement("div", { className: "max-w-5xl mx-auto px-5 pb-4 flex flex-wrap items-center gap-3" }, /* @__PURE__ */ React.createElement("div", { className: "flex gap-4 text-[12px] font-mono-data" }, /* @__PURE__ */ React.createElement("span", { className: "flex items-center gap-1.5 text-amber-300" }, /* @__PURE__ */ React.createElement("span", { className: "w-1.5 h-1.5 rounded-full bg-amber-400" }), " ", pendingCount, " pending"), /* @__PURE__ */ React.createElement("span", { className: "flex items-center gap-1.5 text-emerald-300" }, /* @__PURE__ */ React.createElement("span", { className: "w-1.5 h-1.5 rounded-full bg-emerald-400" }), " ", closedCount, " closed"), /* @__PURE__ */ React.createElement("span", { className: "text-slate-600" }, "\xB7"), /* @__PURE__ */ React.createElement("span", { className: "text-slate-500" }, filteredTasks.length, filterActive ? ` of ${tasks.length}` : "", " shown")), /* @__PURE__ */ React.createElement("div", { className: "flex items-center gap-1 text-[12px]" }, ["all", "pending", "closed"].map((sf) => /* @__PURE__ */ React.createElement(
+      "button",
+      {
+        key: sf,
+        onClick: () => setStatusFilter(sf),
+        className: `px-2.5 py-1 rounded-lg capitalize transition-colors ${statusFilter === sf ? "text-[#06222b] font-medium" : "bg-slate-800 text-slate-300 hover:bg-slate-700"}`,
+        style: statusFilter === sf ? { backgroundColor: accentColor } : void 0
+      },
+      sf
+    )), /* @__PURE__ */ React.createElement(
+      "button",
+      {
+        onClick: () => setMyDayOnly((v) => !v),
+        className: `px-2.5 py-1 rounded-lg transition-colors ${myDayOnly ? "text-[#06222b] font-medium" : "bg-slate-800 text-slate-300 hover:bg-slate-700"}`,
+        style: myDayOnly ? { backgroundColor: accentColor } : void 0
+      },
+      "My day"
+    )), /* @__PURE__ */ React.createElement(
+      "input",
+      {
+        value: search,
+        onChange: (e) => setSearch(e.target.value),
+        placeholder: "Search tasks, machine, customer\u2026",
+        className: "text-[12px] bg-[#0b0f14] border border-slate-700 rounded-lg px-2.5 py-1 text-slate-200 placeholder-slate-600 focus:outline-none focus:ring-2 focus:ring-cyan-400/40 w-48"
+      }
+    ), /* @__PURE__ */ React.createElement("div", { className: "flex items-center gap-1.5 text-[12px]" }, /* @__PURE__ */ React.createElement(ArrowUpDown, { size: 13, className: "text-slate-500" }), /* @__PURE__ */ React.createElement(
+      "select",
+      {
+        value: sortBy,
+        onChange: (e) => setSortBy(e.target.value),
+        className: "bg-[#0b0f14] border border-slate-700 rounded-lg px-2 py-1 text-slate-200 focus:outline-none focus:ring-2 focus:ring-cyan-400/40"
+      },
+      /* @__PURE__ */ React.createElement("option", { value: "newest" }, "Newest first"),
+      /* @__PURE__ */ React.createElement("option", { value: "oldest" }, "Oldest first"),
+      /* @__PURE__ */ React.createElement("option", { value: "priority" }, "Priority"),
+      /* @__PURE__ */ React.createElement("option", { value: "customer" }, "Customer"),
+      /* @__PURE__ */ React.createElement("option", { value: "engineer" }, "Engineer")
+    )), /* @__PURE__ */ React.createElement("div", { className: "flex items-center gap-1.5 text-[12px]" }, /* @__PURE__ */ React.createElement(ListChecks, { size: 13, className: "text-slate-500" }), /* @__PURE__ */ React.createElement(
+      "select",
+      {
+        value: groupBy,
+        onChange: (e) => setGroupBy(e.target.value),
+        className: "bg-[#0b0f14] border border-slate-700 rounded-lg px-2 py-1 text-slate-200 focus:outline-none focus:ring-2 focus:ring-cyan-400/40"
+      },
+      /* @__PURE__ */ React.createElement("option", { value: "none" }, "No grouping"),
+      /* @__PURE__ */ React.createElement("option", { value: "status" }, "Group: Status (Pending/Closed)"),
+      /* @__PURE__ */ React.createElement("option", { value: "area" }, "Group: Area"),
+      /* @__PURE__ */ React.createElement("option", { value: "customer" }, "Group: Customer"),
+      /* @__PURE__ */ React.createElement("option", { value: "engineer" }, "Group: Engineer"),
+      /* @__PURE__ */ React.createElement("option", { value: "priority" }, "Group: Priority")
+    )), /* @__PURE__ */ React.createElement("div", { className: "flex items-center gap-1 text-[12px] no-print" }, /* @__PURE__ */ React.createElement(
+      "button",
+      {
+        onClick: () => setView("tasks"),
+        className: `flex items-center gap-1 px-2.5 py-1 rounded-lg transition-colors ${view === "tasks" ? "text-[#06222b] font-medium" : "bg-slate-800 text-slate-300 hover:bg-slate-700"}`,
+        style: view === "tasks" ? { backgroundColor: accentColor } : void 0
+      },
+      /* @__PURE__ */ React.createElement(ListChecks, { size: 13 }),
+      " Tasks"
+    ), /* @__PURE__ */ React.createElement(
+      "button",
+      {
+        onClick: () => setView("dashboard"),
+        className: `flex items-center gap-1 px-2.5 py-1 rounded-lg transition-colors ${view === "dashboard" ? "text-[#06222b] font-medium" : "bg-slate-800 text-slate-300 hover:bg-slate-700"}`,
+        style: view === "dashboard" ? { backgroundColor: accentColor } : void 0
+      },
+      /* @__PURE__ */ React.createElement(LayoutDashboard, { size: 13 }),
+      " Dashboard"
+    ), /* @__PURE__ */ React.createElement("button", { onClick: () => window.print(), className: "flex items-center gap-1 px-2.5 py-1 rounded-lg bg-slate-800 text-slate-300 hover:bg-slate-700 transition-colors", title: "Print / save as PDF" }, /* @__PURE__ */ React.createElement(Printer, { size: 13 }))), /* @__PURE__ */ React.createElement("div", { className: "flex items-center gap-2 ml-auto text-[12px] no-print" }, /* @__PURE__ */ React.createElement(Calendar, { size: 13, className: "text-slate-500" }), /* @__PURE__ */ React.createElement(
+      "input",
+      {
+        type: "date",
+        value: dateFilter,
+        onChange: (e) => {
+          setDateFilter(e.target.value);
+          setMonthFilter("");
+        },
+        className: "bg-[#0b0f14] border border-slate-700 rounded-lg px-2 py-1 text-slate-200 font-mono-data focus:outline-none focus:ring-2 focus:ring-cyan-400/40"
+      }
+    ), /* @__PURE__ */ React.createElement("span", { className: "text-slate-600" }, "or"), /* @__PURE__ */ React.createElement(
+      "input",
+      {
+        type: "month",
+        value: monthFilter,
+        onChange: (e) => {
+          setMonthFilter(e.target.value);
+          setDateFilter("");
+        },
+        className: "bg-[#0b0f14] border border-slate-700 rounded-lg px-2 py-1 text-slate-200 font-mono-data focus:outline-none focus:ring-2 focus:ring-cyan-400/40"
+      }
+    ), filterActive && /* @__PURE__ */ React.createElement("button", { onClick: () => {
+      setDateFilter("");
+      setMonthFilter("");
+      setSearch("");
+      setStatusFilter("all");
+      setMyDayOnly(false);
+    }, className: "text-slate-500 hover:text-slate-200 flex items-center gap-1" }, /* @__PURE__ */ React.createElement(X, { size: 13 }), " Clear")))), /* @__PURE__ */ React.createElement("main", { className: "max-w-5xl mx-auto px-5 py-6" }, showForm && /* @__PURE__ */ React.createElement("div", { className: "fixed inset-0 bg-black/60 z-30 flex items-start sm:items-center justify-center p-4 overflow-y-auto no-print", onClick: () => setShowForm(false) }, /* @__PURE__ */ React.createElement("form", { onSubmit: addTask, className: "my-6 w-full max-w-2xl border rounded-xl overflow-hidden", style: { backgroundColor: theme.panel, borderColor: theme.border }, onClick: (e) => e.stopPropagation() }, /* @__PURE__ */ React.createElement("div", { className: "flex items-center justify-between px-5 pt-4" }, /* @__PURE__ */ React.createElement("h2", { className: "text-sm font-semibold text-slate-100" }, "New task"), /* @__PURE__ */ React.createElement("button", { type: "button", onClick: () => setShowForm(false), className: "text-slate-500 hover:text-slate-200" }, /* @__PURE__ */ React.createElement(X, { size: 18 }))), /* @__PURE__ */ React.createElement("div", { className: "flex border-b border-slate-800 px-2 pt-2 gap-1" }, formTabs.map((ft) => /* @__PURE__ */ React.createElement(
+      "button",
+      {
+        key: ft.key,
+        type: "button",
+        onClick: () => setFormTab(ft.key),
+        className: `px-3 py-2 text-[12.5px] font-medium rounded-t-lg transition-colors ${formTab === ft.key ? "bg-[#0b0f14]" : "text-slate-500 hover:text-slate-300"}`,
+        style: formTab === ft.key ? { color: accentColor } : void 0
+      },
+      ft.label
+    ))), /* @__PURE__ */ React.createElement("div", { className: "p-5 max-h-[60vh] overflow-y-auto" }, formTab === "details" && /* @__PURE__ */ React.createElement("div", { className: "grid grid-cols-1 sm:grid-cols-2 gap-4" }, /* @__PURE__ */ React.createElement("div", { className: "sm:col-span-2" }, /* @__PURE__ */ React.createElement("label", { className: "block text-[11px] uppercase tracking-wide text-slate-500 mb-1.5" }, "Task name"), /* @__PURE__ */ React.createElement(
+      "input",
+      {
+        autoFocus: true,
+        ref: newTaskInputRef,
+        value: form.taskName,
+        onChange: (e) => setForm({ ...form, taskName: e.target.value }),
+        placeholder: "e.g. Replace faulty HBA card",
+        className: "w-full bg-[#0b0f14] border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-100 placeholder-slate-600 focus:outline-none focus:ring-2 focus:ring-cyan-400/40 focus:border-cyan-400/50"
+      }
+    )), /* @__PURE__ */ React.createElement(
+      PredefinedSelect,
+      {
+        label: "Machine",
+        value: form.machine,
+        options: machines,
+        placeholder: "Select machine",
+        mono: true,
+        onChange: (v) => setForm({ ...form, machine: v }),
+        onAddOption: addFns.machine
+      }
+    ), /* @__PURE__ */ React.createElement(
+      PredefinedSelect,
+      {
+        label: "Model",
+        value: form.model,
+        options: models,
+        placeholder: "Select model",
+        mono: true,
+        onChange: (v) => setForm({ ...form, model: v }),
+        onAddOption: addFns.model
+      }
+    ), /* @__PURE__ */ React.createElement(
+      PredefinedSelect,
+      {
+        label: "Serial number",
+        value: form.serialNumber,
+        options: serials,
+        placeholder: "Select serial number",
+        mono: true,
+        onChange: (v) => setForm({ ...form, serialNumber: v }),
+        onAddOption: addFns.serial
+      }
+    ), /* @__PURE__ */ React.createElement(
+      PredefinedSelect,
+      {
+        label: "Host name",
+        value: form.hostName,
+        options: hosts,
+        placeholder: "Select host name",
+        mono: true,
+        onChange: (v) => setForm({ ...form, hostName: v }),
+        onAddOption: addFns.host
+      }
+    ), /* @__PURE__ */ React.createElement(
+      PredefinedSelect,
+      {
+        label: "Engineer name",
+        value: form.engineerName,
+        options: engineers,
+        placeholder: "Select engineer",
+        onChange: (v) => setForm({ ...form, engineerName: v }),
+        onAddOption: addFns.engineer
+      }
+    ), /* @__PURE__ */ React.createElement(
+      PredefinedSelect,
+      {
+        label: "Customer name",
+        value: form.customerName,
+        options: customers,
+        placeholder: "Select customer",
+        onChange: (v) => setForm({ ...form, customerName: v }),
+        onAddOption: addFns.customer
+      }
+    ), /* @__PURE__ */ React.createElement(
+      PredefinedSelect,
+      {
+        label: "Site",
+        value: form.site,
+        options: sites,
+        placeholder: "Select site",
+        onChange: (v) => setForm({ ...form, site: v }),
+        onAddOption: addFns.site
+      }
+    ), /* @__PURE__ */ React.createElement(
+      PredefinedSelect,
+      {
+        label: "Area",
+        value: form.area,
+        options: areas,
+        placeholder: "Select area",
+        onChange: (v) => setForm({ ...form, area: v }),
+        onAddOption: addFns.area
+      }
+    ), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("label", { className: "block text-[11px] uppercase tracking-wide text-slate-500 mb-1.5" }, "Priority"), /* @__PURE__ */ React.createElement(
+      "select",
+      {
+        value: form.priority,
+        onChange: (e) => setForm({ ...form, priority: e.target.value }),
+        className: "w-full bg-[#0b0f14] border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-100 focus:outline-none focus:ring-2 focus:ring-cyan-400/40 focus:border-cyan-400/50"
+      },
+      /* @__PURE__ */ React.createElement("option", { value: "low" }, "Low"),
+      /* @__PURE__ */ React.createElement("option", { value: "medium" }, "Medium"),
+      /* @__PURE__ */ React.createElement("option", { value: "high" }, "High")
+    )), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("label", { className: "block text-[11px] uppercase tracking-wide text-slate-500 mb-1.5" }, "Start date"), /* @__PURE__ */ React.createElement(
+      "input",
+      {
+        type: "date",
+        value: form.startDate,
+        onChange: (e) => setForm({ ...form, startDate: e.target.value }),
+        className: "w-full bg-[#0b0f14] border border-slate-700 rounded-lg px-3 py-2 text-sm font-mono-data text-slate-100 focus:outline-none focus:ring-2 focus:ring-cyan-400/40 focus:border-cyan-400/50"
+      }
+    )), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("label", { className: "block text-[11px] uppercase tracking-wide text-slate-500 mb-1.5" }, "Status"), /* @__PURE__ */ React.createElement(
+      "select",
+      {
+        value: form.status,
+        onChange: (e) => setForm({ ...form, status: e.target.value, closeDate: e.target.value === "closed" ? todayISO() : "" }),
+        className: "w-full bg-[#0b0f14] border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-100 focus:outline-none focus:ring-2 focus:ring-cyan-400/40 focus:border-cyan-400/50"
+      },
+      /* @__PURE__ */ React.createElement("option", { value: "pending" }, "Pending"),
+      /* @__PURE__ */ React.createElement("option", { value: "closed" }, "Closed")
+    )), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("label", { className: "block text-[11px] uppercase tracking-wide text-slate-500 mb-1.5" }, "Open date"), /* @__PURE__ */ React.createElement(
+      "input",
+      {
+        type: "date",
+        value: form.openDate,
+        onChange: (e) => setForm({ ...form, openDate: e.target.value }),
+        className: "w-full bg-[#0b0f14] border border-slate-700 rounded-lg px-3 py-2 text-sm font-mono-data text-slate-100 focus:outline-none focus:ring-2 focus:ring-cyan-400/40 focus:border-cyan-400/50"
+      }
+    )), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("label", { className: "block text-[11px] uppercase tracking-wide text-slate-500 mb-1.5" }, "Close date"), /* @__PURE__ */ React.createElement(
+      "input",
+      {
+        type: "date",
+        value: form.closeDate,
+        onChange: (e) => setForm({ ...form, closeDate: e.target.value }),
+        disabled: form.status === "pending",
+        className: "w-full bg-[#0b0f14] border border-slate-700 rounded-lg px-3 py-2 text-sm font-mono-data text-slate-100 focus:outline-none focus:ring-2 focus:ring-cyan-400/40 focus:border-cyan-400/50 disabled:opacity-40 disabled:cursor-not-allowed"
+      }
+    ), /* @__PURE__ */ React.createElement("p", { className: "text-[10px] text-slate-600 mt-1" }, "Selectable once status is set to Closed."))), formTab === "description" && /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("label", { className: "block text-[11px] uppercase tracking-wide text-slate-500 mb-1.5" }, "Description / work to be done"), /* @__PURE__ */ React.createElement(
+      "textarea",
+      {
+        rows: 6,
+        value: form.description,
+        onChange: (e) => setForm({ ...form, description: e.target.value }),
+        placeholder: "Describe the task and the work involved\u2026",
+        className: "w-full bg-[#0b0f14] border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-100 placeholder-slate-600 focus:outline-none focus:ring-2 focus:ring-cyan-400/40 focus:border-cyan-400/50"
+      }
+    )), formTab === "remarks" && /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("label", { className: "block text-[11px] uppercase tracking-wide text-slate-500 mb-1.5" }, "Remarks"), /* @__PURE__ */ React.createElement(
+      "textarea",
+      {
+        rows: 6,
+        value: form.remarks,
+        onChange: (e) => setForm({ ...form, remarks: e.target.value }),
+        placeholder: "Any additional notes or remarks\u2026",
+        className: "w-full bg-[#0b0f14] border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-100 placeholder-slate-600 focus:outline-none focus:ring-2 focus:ring-cyan-400/40 focus:border-cyan-400/50"
+      }
+    )), formTab === "gst" && /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("label", { className: "block text-[11px] uppercase tracking-wide text-slate-500 mb-1.5" }, "GST number ", /* @__PURE__ */ React.createElement("span", { className: "normal-case text-slate-600" }, "(optional)")), /* @__PURE__ */ React.createElement(
+      "input",
+      {
+        value: form.gstNumber,
+        onChange: (e) => setForm({ ...form, gstNumber: e.target.value }),
+        placeholder: "e.g. 22AAAAA0000A1Z5",
+        className: "w-full bg-[#0b0f14] border border-slate-700 rounded-lg px-3 py-2 text-sm font-mono-data text-slate-100 placeholder-slate-600 focus:outline-none focus:ring-2 focus:ring-cyan-400/40 focus:border-cyan-400/50"
+      }
+    ), /* @__PURE__ */ React.createElement("p", { className: "text-[11px] text-slate-600 mt-1.5" }, "Only fill this in if the task needs a GST number attached \u2014 leave blank otherwise."))), /* @__PURE__ */ React.createElement("div", { className: "flex justify-end gap-2 px-5 pb-5" }, /* @__PURE__ */ React.createElement("button", { type: "button", onClick: () => {
+      setForm(emptyForm());
+      setFormTab("details");
+      setShowForm(false);
+    }, className: "text-sm text-slate-400 hover:text-slate-200 px-3 py-2" }, "Cancel"), /* @__PURE__ */ React.createElement("button", { type: "submit", className: "bg-cyan-500 hover:bg-cyan-400 text-[#06222b] font-medium text-sm px-4 py-2 rounded-lg transition-colors" }, "Add task")))), selectedIds.length > 0 && /* @__PURE__ */ React.createElement("div", { className: "flex flex-wrap items-center gap-2 mb-4 p-3 rounded-xl border no-print", style: { backgroundColor: theme.panel, borderColor: theme.border } }, /* @__PURE__ */ React.createElement("span", { className: "text-[12px] text-slate-300" }, selectedIds.length, " selected"), /* @__PURE__ */ React.createElement("button", { onClick: bulkCloseSelected, className: "text-[12px] font-medium bg-slate-800 hover:bg-slate-700 text-slate-200 px-2.5 py-1 rounded-lg" }, "Mark closed"), /* @__PURE__ */ React.createElement("button", { onClick: () => bulkExportSelected("excel"), className: "text-[12px] font-medium bg-slate-800 hover:bg-slate-700 text-slate-200 px-2.5 py-1 rounded-lg" }, "Export Excel"), /* @__PURE__ */ React.createElement("button", { onClick: () => bulkExportSelected("csv"), className: "text-[12px] font-medium bg-slate-800 hover:bg-slate-700 text-slate-200 px-2.5 py-1 rounded-lg" }, "Export CSV"), /* @__PURE__ */ React.createElement("button", { onClick: bulkDeleteSelected, className: "text-[12px] font-medium text-red-400 hover:text-red-300 px-2.5 py-1 rounded-lg" }, "Delete"), /* @__PURE__ */ React.createElement("button", { onClick: () => setSelectedIds([]), className: "text-[12px] text-slate-500 hover:text-slate-300 ml-auto" }, "Clear selection")), view === "dashboard" ? /* @__PURE__ */ React.createElement(Dashboard, { tasks, theme, accentColor }) : filteredTasks.length === 0 ? /* @__PURE__ */ React.createElement("div", { className: "text-center py-20 text-slate-600" }, /* @__PURE__ */ React.createElement(Server, { size: 28, className: "mx-auto mb-3 opacity-40" }), /* @__PURE__ */ React.createElement("p", { className: "text-sm" }, filterActive ? "No tasks match this date." : "No tasks yet. Add one to get started.")) : /* @__PURE__ */ React.createElement("div", { className: "space-y-6" }, taskGroups.map((group, gi) => /* @__PURE__ */ React.createElement("div", { key: group.label || "flat" }, group.label && /* @__PURE__ */ React.createElement("div", { className: "flex items-center gap-2 mb-3" }, /* @__PURE__ */ React.createElement("h3", { className: "text-[12px] font-semibold uppercase tracking-wide text-slate-400" }, group.label), /* @__PURE__ */ React.createElement("span", { className: "text-[11px] text-slate-600 font-mono-data" }, group.items.length), /* @__PURE__ */ React.createElement("div", { className: "h-px flex-1", style: { backgroundColor: theme.border } })), /* @__PURE__ */ React.createElement("div", { className: "grid grid-cols-1 lg:grid-cols-2 gap-3 items-start" }, group.items.map((t) => {
+      const s = STATUS[t.status];
+      const isOpen = !!expanded[t.id];
+      const tab = cardTab[t.id] || "updates";
+      return /* @__PURE__ */ React.createElement("div", { key: t.id, className: `border rounded-xl overflow-hidden transition-colors ${t.status === "pending" ? "" : "opacity-90"}`, style: { ...glass(theme.panel), borderColor: theme.border, borderLeftWidth: "3px", borderLeftColor: PRIORITY[t.priority] && PRIORITY[t.priority].hex || theme.border } }, /* @__PURE__ */ React.createElement(
+  "div",
+  { className: "p-4 sm:p-5 cursor-pointer", onClick: () => setExpanded((p) => ({ ...p, [t.id]: !p[t.id] })) },
+  /* @__PURE__ */ React.createElement("div", { className: "flex items-center justify-between gap-3 flex-wrap" }, /* @__PURE__ */ React.createElement("div", { className: "flex items-center gap-3 min-w-0" }, /* @__PURE__ */ React.createElement(
+    "input",
+    {
+      type: "checkbox",
+      checked: selectedIds.includes(t.id),
+      onClick: (e) => e.stopPropagation(),
+      onChange: () => setSelectedIds((prev) => prev.includes(t.id) ? prev.filter((x) => x !== t.id) : [...prev, t.id]),
+      className: "shrink-0 no-print"
+    }
+  ), /* @__PURE__ */ React.createElement("button", { onClick: (e) => {
+    e.stopPropagation();
+    toggleStatus(t.id);
+  }, title: t.status === "pending" ? "Mark closed" : "Mark pending", className: "shrink-0" }, t.status === "closed" ? /* @__PURE__ */ React.createElement(CheckCircle2, { size: 19, className: "text-emerald-400" }) : /* @__PURE__ */ React.createElement(Circle, { size: 19, className: "text-amber-400" })), /* @__PURE__ */ React.createElement("div", { className: "min-w-0" }, /* @__PURE__ */ React.createElement("p", { className: `block w-full truncate text-sm font-medium text-left ${t.status === "closed" ? "text-slate-500 line-through" : "text-slate-100"}` }, t.taskName), /* @__PURE__ */ React.createElement("div", { className: "flex flex-wrap items-center gap-x-3 gap-y-1 mt-1 text-[12px] font-mono-data text-slate-500" }, /* @__PURE__ */ React.createElement("span", null, fmtDate(t.startDate)), /* @__PURE__ */ React.createElement("span", { className: "text-cyan-300/80" }, t.machine || "\u2014")))), /* @__PURE__ */ React.createElement("div", { className: "flex items-center gap-2 shrink-0 no-print" }, /* @__PURE__ */ React.createElement("button", { onClick: (e) => {
+    e.stopPropagation();
+    printSingleTask(t);
+  }, className: "text-slate-600 hover:text-slate-200 transition-colors", title: "Print PDF" }, /* @__PURE__ */ React.createElement(Printer, { size: 15 })), /* @__PURE__ */ React.createElement("button", { onClick: (e) => {
+    e.stopPropagation();
+    exportTaskWord(t);
+  }, className: "text-slate-600 hover:text-slate-200 transition-colors", title: "Download Word" }, /* @__PURE__ */ React.createElement(FileText, { size: 15 })), /* @__PURE__ */ React.createElement("button", { onClick: (e) => {
+    e.stopPropagation();
+    setDetailTaskId(t.id);
+  }, className: "text-slate-600 hover:text-slate-200 transition-colors", title: "Open full details" }, /* @__PURE__ */ React.createElement(Eye, { size: 15 })), /* @__PURE__ */ React.createElement("button", { onClick: (e) => {
+    e.stopPropagation();
+    duplicateTask(t.id);
+  }, className: "text-slate-600 hover:text-slate-300 transition-colors", title: "Duplicate task" }, /* @__PURE__ */ React.createElement(Copy, { size: 15 })), /* @__PURE__ */ React.createElement("button", { onClick: (e) => {
+    e.stopPropagation();
+    deleteTask(t.id);
+  }, className: "text-slate-600 hover:text-red-400 transition-colors", title: "Delete task" }, /* @__PURE__ */ React.createElement(Trash2, { size: 15 })), isOpen ? /* @__PURE__ */ React.createElement(ChevronUp, { size: 15, className: "text-slate-500" }) : /* @__PURE__ */ React.createElement(ChevronDown, { size: 15, className: "text-slate-500" })))
+), isOpen && /* @__PURE__ */ React.createElement("div", { className: "border-t", style: { ...glass(theme.panel2), borderColor: theme.border } }, /* @__PURE__ */ React.createElement("div", { className: "flex gap-1 px-4 sm:px-5 pt-3" }, [
+        { key: "details", label: "Details" },
+        { key: "updates", label: `Updates (${t.updates.length})` },
+        { key: "description", label: "Description" },
+        { key: "remarks", label: "Remarks" },
+        { key: "gst", label: "GST No." },
+        { key: "attachments", label: `Attachments (${(t.attachments || []).length})` }
+      ].map((ct) => /* @__PURE__ */ React.createElement(
+        "button",
+        {
+          key: ct.key,
+          onClick: () => setCardTab((p) => ({ ...p, [t.id]: ct.key })),
+          className: `px-2.5 py-1.5 text-[12px] font-medium rounded-t-lg transition-colors ${tab === ct.key ? "" : "text-slate-500 hover:text-slate-300"}`,
+          style: tab === ct.key ? { backgroundColor: theme.panel, color: accentColor } : void 0
+        },
+        ct.label
+      ))), /* @__PURE__ */ React.createElement("div", { className: "px-4 sm:px-5 py-4" }, tab === "details" && /* @__PURE__ */ React.createElement("div", { className: "grid grid-cols-1 sm:grid-cols-2 gap-3" }, /* @__PURE__ */ React.createElement("div", { className: "sm:col-span-2" }, /* @__PURE__ */ React.createElement("label", { className: "block text-[11px] uppercase tracking-wide text-slate-500 mb-1.5" }, "Task name"), /* @__PURE__ */ React.createElement(
+        "input",
+        {
+          value: t.taskName,
+          onChange: (e) => updateTaskField(t.id, "taskName", e.target.value),
+          className: "w-full bg-[#0b0f14] border border-slate-700 rounded-lg px-3 py-2 text-[13px] text-slate-100 focus:outline-none focus:ring-2 focus:ring-cyan-400/40"
+        }
+      )), /* @__PURE__ */ React.createElement(
+        PredefinedSelect,
+        {
+          label: "Machine",
+          value: t.machine,
+          options: machines,
+          placeholder: "Select machine",
+          mono: true,
+          onChange: (v) => updateTaskField(t.id, "machine", v),
+          onAddOption: addFns.machine
+        }
+      ), /* @__PURE__ */ React.createElement(
+        PredefinedSelect,
+        {
+          label: "Model",
+          value: t.model,
+          options: models,
+          placeholder: "Select model",
+          mono: true,
+          onChange: (v) => updateTaskField(t.id, "model", v),
+          onAddOption: addFns.model
+        }
+      ), /* @__PURE__ */ React.createElement(
+        PredefinedSelect,
+        {
+          label: "Serial number",
+          value: t.serialNumber,
+          options: serials,
+          placeholder: "Select serial number",
+          mono: true,
+          onChange: (v) => updateTaskField(t.id, "serialNumber", v),
+          onAddOption: addFns.serial
+        }
+      ), /* @__PURE__ */ React.createElement(
+        PredefinedSelect,
+        {
+          label: "Host name",
+          value: t.hostName,
+          options: hosts,
+          placeholder: "Select host name",
+          mono: true,
+          onChange: (v) => updateTaskField(t.id, "hostName", v),
+          onAddOption: addFns.host
+        }
+      ), /* @__PURE__ */ React.createElement(
+        PredefinedSelect,
+        {
+          label: "Engineer name",
+          value: t.engineerName,
+          options: engineers,
+          placeholder: "Select engineer",
+          onChange: (v) => updateTaskField(t.id, "engineerName", v),
+          onAddOption: addFns.engineer
+        }
+      ), /* @__PURE__ */ React.createElement(
+        PredefinedSelect,
+        {
+          label: "Customer name",
+          value: t.customerName,
+          options: customers,
+          placeholder: "Select customer",
+          onChange: (v) => updateTaskField(t.id, "customerName", v),
+          onAddOption: addFns.customer
+        }
+      ), /* @__PURE__ */ React.createElement(
+        PredefinedSelect,
+        {
+          label: "Site",
+          value: t.site,
+          options: sites,
+          placeholder: "Select site",
+          onChange: (v) => updateTaskField(t.id, "site", v),
+          onAddOption: addFns.site
+        }
+      ), /* @__PURE__ */ React.createElement(
+        PredefinedSelect,
+        {
+          label: "Area",
+          value: t.area,
+          options: areas,
+          placeholder: "Select area",
+          onChange: (v) => updateTaskField(t.id, "area", v),
+          onAddOption: addFns.area
+        }
+      ), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("label", { className: "block text-[11px] uppercase tracking-wide text-slate-500 mb-1.5" }, "Priority"), /* @__PURE__ */ React.createElement(
+        "select",
+        {
+          value: t.priority,
+          onChange: (e) => updateTaskField(t.id, "priority", e.target.value),
+          className: "w-full bg-[#0b0f14] border border-slate-700 rounded-lg px-3 py-2 text-[13px] text-slate-100 focus:outline-none focus:ring-2 focus:ring-cyan-400/40"
+        },
+        /* @__PURE__ */ React.createElement("option", { value: "low" }, "Low"),
+        /* @__PURE__ */ React.createElement("option", { value: "medium" }, "Medium"),
+        /* @__PURE__ */ React.createElement("option", { value: "high" }, "High")
+      )), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("label", { className: "block text-[11px] uppercase tracking-wide text-slate-500 mb-1.5" }, "Start date"), /* @__PURE__ */ React.createElement(
+        "input",
+        {
+          type: "date",
+          value: t.startDate,
+          onChange: (e) => updateTaskField(t.id, "startDate", e.target.value),
+          className: "w-full bg-[#0b0f14] border border-slate-700 rounded-lg px-3 py-2 text-[13px] font-mono-data text-slate-100 focus:outline-none focus:ring-2 focus:ring-cyan-400/40"
+        }
+      )), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("label", { className: "block text-[11px] uppercase tracking-wide text-slate-500 mb-1.5" }, "Open date"), /* @__PURE__ */ React.createElement(
+        "input",
+        {
+          type: "date",
+          value: t.openDate,
+          onChange: (e) => updateTaskField(t.id, "openDate", e.target.value),
+          className: "w-full bg-[#0b0f14] border border-slate-700 rounded-lg px-3 py-2 text-[13px] font-mono-data text-slate-100 focus:outline-none focus:ring-2 focus:ring-cyan-400/40"
+        }
+      )), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("label", { className: "block text-[11px] uppercase tracking-wide text-slate-500 mb-1.5" }, "Close date"), /* @__PURE__ */ React.createElement(
+        "input",
+        {
+          type: "date",
+          value: t.closeDate,
+          onChange: (e) => updateTaskField(t.id, "closeDate", e.target.value),
+          disabled: t.status === "pending",
+          className: "w-full bg-[#0b0f14] border border-slate-700 rounded-lg px-3 py-2 text-[13px] font-mono-data text-slate-100 focus:outline-none focus:ring-2 focus:ring-cyan-400/40 disabled:opacity-40 disabled:cursor-not-allowed"
+        }
+      ), /* @__PURE__ */ React.createElement("p", { className: "text-[10px] text-slate-600 mt-1" }, "Selectable once status is set to Closed."))), tab === "updates" && /* @__PURE__ */ React.createElement(React.Fragment, null, t.updates.length > 0 && /* @__PURE__ */ React.createElement("ul", { className: "space-y-2 mb-3" }, [...t.updates].sort((a, b) => (a.date || "").localeCompare(b.date || "")).map((u) => /* @__PURE__ */ React.createElement("li", { key: u.id, className: "flex items-start gap-2 bg-[#0b0f14] border border-slate-800 rounded-lg p-2.5" }, /* @__PURE__ */ React.createElement("div", { className: "flex flex-col gap-1.5 shrink-0" }, /* @__PURE__ */ React.createElement(
+        "input",
+        {
+          type: "date",
+          value: u.date,
+          onChange: (e) => editUpdateField(t.id, u.id, "date", e.target.value),
+          className: "bg-transparent border border-slate-700 rounded-lg px-2 py-1 text-[11px] font-mono-data text-cyan-400/80 focus:outline-none focus:ring-1 focus:ring-cyan-400/40 w-[130px]"
+        }
+      ), /* @__PURE__ */ React.createElement("span", { className: "text-[10px] text-slate-600 font-mono-data pl-1" }, u.time)), /* @__PURE__ */ React.createElement(
+        "textarea",
+        {
+          value: u.text,
+          onChange: (e) => editUpdateField(t.id, u.id, "text", e.target.value),
+          rows: 2,
+          className: "flex-1 bg-transparent text-[13px] text-slate-300 leading-snug focus:outline-none focus:ring-1 focus:ring-cyan-400/40 rounded-lg px-2 py-1 resize-y"
+        }
+      ), /* @__PURE__ */ React.createElement("button", { onClick: () => deleteUpdateEntry(t.id, u.id), className: "text-slate-600 hover:text-red-400 shrink-0 mt-1", title: "Delete this update" }, /* @__PURE__ */ React.createElement(Trash2, { size: 13 }))))), /* @__PURE__ */ React.createElement("div", { className: "flex gap-2" }, /* @__PURE__ */ React.createElement(
+        "input",
+        {
+          type: "date",
+          value: updateDraft[t.id] && updateDraft[t.id].date || todayISO(),
+          onChange: (e) => setUpdateDraft((p) => ({ ...p, [t.id]: { text: p[t.id] && p[t.id].text || "", date: e.target.value } })),
+          className: "bg-[#0b0f14] border border-slate-700 rounded-lg px-2 py-1.5 text-[12px] font-mono-data text-slate-100 focus:outline-none focus:ring-2 focus:ring-cyan-400/40 focus:border-cyan-400/50 shrink-0"
+        }
+      ), /* @__PURE__ */ React.createElement(
+        "input",
+        {
+          value: updateDraft[t.id] && updateDraft[t.id].text || "",
+          onChange: (e) => setUpdateDraft((p) => ({ ...p, [t.id]: { date: p[t.id] && p[t.id].date || todayISO(), text: e.target.value } })),
+          onKeyDown: (e) => {
+            if (e.key === "Enter") {
+              e.preventDefault();
+              addUpdate(t.id);
+            }
+          },
+          placeholder: "Log what was done\u2026",
+          className: "flex-1 bg-[#0b0f14] border border-slate-700 rounded-lg px-3 py-1.5 text-[13px] text-slate-100 placeholder-slate-600 focus:outline-none focus:ring-2 focus:ring-cyan-400/40 focus:border-cyan-400/50"
+        }
+      ), /* @__PURE__ */ React.createElement("button", { onClick: () => addUpdate(t.id), className: "text-[13px] font-medium bg-slate-800 hover:bg-slate-700 text-slate-200 px-3 py-1.5 rounded-lg transition-colors shrink-0" }, "Add"))), tab === "description" && /* @__PURE__ */ React.createElement(
+        "textarea",
+        {
+          rows: 4,
+          value: t.description || "",
+          onChange: (e) => updateTaskField(t.id, "description", e.target.value),
+          placeholder: "Describe the task and the work involved\u2026",
+          className: "w-full bg-[#0b0f14] border border-slate-700 rounded-lg px-3 py-2 text-[13px] text-slate-100 placeholder-slate-600 focus:outline-none focus:ring-2 focus:ring-cyan-400/40 focus:border-cyan-400/50"
+        }
+      ), tab === "remarks" && /* @__PURE__ */ React.createElement(
+        "textarea",
+        {
+          rows: 4,
+          value: t.remarks || "",
+          onChange: (e) => updateTaskField(t.id, "remarks", e.target.value),
+          placeholder: "Any additional notes or remarks\u2026",
+          className: "w-full bg-[#0b0f14] border border-slate-700 rounded-lg px-3 py-2 text-[13px] text-slate-100 placeholder-slate-600 focus:outline-none focus:ring-2 focus:ring-cyan-400/40 focus:border-cyan-400/50"
+        }
+      ), tab === "gst" && /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement(
+        "input",
+        {
+          value: t.gstNumber || "",
+          onChange: (e) => updateTaskField(t.id, "gstNumber", e.target.value),
+          placeholder: "e.g. 22AAAAA0000A1Z5",
+          className: "w-full bg-[#0b0f14] border border-slate-700 rounded-lg px-3 py-2 text-[13px] font-mono-data text-slate-100 placeholder-slate-600 focus:outline-none focus:ring-2 focus:ring-cyan-400/40 focus:border-cyan-400/50"
+        }
+      ), /* @__PURE__ */ React.createElement("p", { className: "text-[11px] text-slate-600 mt-1.5" }, "Optional \u2014 fill in only if this task needs a GST number attached.")), tab === "attachments" && /* @__PURE__ */ React.createElement("div", null, (t.attachments || []).length > 0 && /* @__PURE__ */ React.createElement("div", { className: "grid grid-cols-2 sm:grid-cols-3 gap-2 mb-3" }, t.attachments.map((a) => /* @__PURE__ */ React.createElement("div", { key: a.id, className: "relative group border border-slate-800 rounded-lg overflow-hidden bg-[#0b0f14]" }, a.type && a.type.startsWith("image/") ? /* @__PURE__ */ React.createElement("img", { src: a.dataUrl, alt: a.name, className: "w-full h-20 object-cover" }) : /* @__PURE__ */ React.createElement("div", { className: "w-full h-20 flex flex-col items-center justify-center text-slate-500 px-2" }, /* @__PURE__ */ React.createElement(Save, { size: 18 }), /* @__PURE__ */ React.createElement("span", { className: "text-[10px] mt-1 truncate w-full text-center" }, a.name)), /* @__PURE__ */ React.createElement("div", { className: "px-2 py-1 flex items-center justify-between text-[10px] text-slate-500" }, /* @__PURE__ */ React.createElement("a", { href: a.dataUrl, download: a.name, className: "hover:text-cyan-300 truncate" }, a.type && a.type.startsWith("image/") ? a.name : "Download"), /* @__PURE__ */ React.createElement("button", { onClick: () => removeAttachment(t.id, a.id), className: "text-slate-600 hover:text-red-400 shrink-0 ml-1" }, /* @__PURE__ */ React.createElement(X, { size: 12 })))))), /* @__PURE__ */ React.createElement("label", { className: "inline-flex items-center gap-1.5 text-[12px] font-medium bg-slate-800 hover:bg-slate-700 text-slate-200 px-3 py-1.5 rounded-lg cursor-pointer" }, /* @__PURE__ */ React.createElement(UploadIcon, { size: 13 }), " Add files", /* @__PURE__ */ React.createElement("input", { type: "file", multiple: true, className: "hidden", onChange: (e) => {
+        addAttachments(t.id, e.target.files);
+        e.target.value = "";
+      } })), /* @__PURE__ */ React.createElement("p", { className: "text-[11px] text-slate-600 mt-1.5" }, "Photos, PDFs, or any other file \u2014 stored inside this task.")))));
+    })))))), undoStack.length > 0 && /* @__PURE__ */ React.createElement("div", { className: "fixed bottom-4 right-4 z-40 space-y-2 no-print" }, undoStack.map((entry) => /* @__PURE__ */ React.createElement("div", { key: entry.id, className: "flex items-center gap-3 bg-[#111826] border border-slate-800 rounded-lg px-4 py-2.5 shadow-xl" }, /* @__PURE__ */ React.createElement("span", { className: "text-[12px] text-slate-300 truncate max-w-[180px]" }, '"', entry.task.taskName, '" deleted'), /* @__PURE__ */ React.createElement("button", { onClick: () => undoDelete(entry.id), className: "flex items-center gap-1 text-[12px] font-medium shrink-0", style: { color: accentColor } }, /* @__PURE__ */ React.createElement(Undo2, { size: 13 }), " Undo")))), detailTaskId && tasks.find((t) => t.id === detailTaskId) && /* @__PURE__ */ React.createElement(
+      TaskDetailModal,
+      {
+        task: tasks.find((t) => t.id === detailTaskId),
+        onClose: () => setDetailTaskId(null),
+        onPrint: () => printSingleTask(tasks.find((t) => t.id === detailTaskId)),
+        onExportWord: () => exportTaskWord(tasks.find((t) => t.id === detailTaskId)),
+        onToggleStatus: () => toggleStatus(detailTaskId),
+        accentColor
+      }
+    )), printTask && /* @__PURE__ */ React.createElement("div", { id: "single-print-area", style: { backgroundColor: "#fff", color: "#111", padding: "24px" } }, /* @__PURE__ */ React.createElement("h1", { style: { fontSize: "18px", fontWeight: 600, marginBottom: "12px" } }, printTask.taskName), /* @__PURE__ */ React.createElement(TaskDetailBody, { t: printTask })));
+  }
+  ReactDOM.createRoot(document.getElementById("root")).render(/* @__PURE__ */ React.createElement(TaskScheduler, null));
+})();
+
+</script>
+</body>
+</html>
