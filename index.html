@@ -25,6 +25,22 @@
     body.printing-task #single-print-area { display: block !important; }
     body:not(.printing-task) #single-print-area { display: none !important; }
   }
+
+  /* ---- role-based hiding (simple access control) ---- */
+  body.perm-noedit button[title^="Mark "], body.perm-noedit button[title="Duplicate task"],
+  body.perm-noedit button[title="Delete this update"], body.perm-noedit .perm-new,
+  body.perm-noedit main label.cursor-pointer { display: none !important; }
+  body.perm-noedit main textarea, body.perm-noedit main select,
+  body.perm-noedit main input:not([type="checkbox"]) { pointer-events: none; opacity: .75; }
+  body.perm-nodelete button[title="Delete task"], body.perm-nodelete button[title="Delete selected"] { display: none !important; }
+  body.perm-noreports button[title="Print PDF"], body.perm-noreports button[title="Download Word"],
+  body.perm-noreports button[title="Download Excel report"], body.perm-noreports button[title="Download CSV report"],
+  body.perm-noreports button[title="Print / save as PDF"] { display: none !important; }
+  body.perm-noedit.perm-noreports main input[type="checkbox"] { display: none !important; }
+  body.perm-noadmin button[title="Manage predefined values"], body.perm-noadmin button[title="Word report template"],
+  body.perm-noadmin button[title="Google Drive sync"], body.perm-noadmin button[title="Theme & accent color"],
+  body.perm-noadmin button[title="Backup & auto-save"], body.perm-noadmin button[title="Screen lock"],
+  body.perm-noadmin button[title="Users & permissions"] { display: none !important; }
 </style>
 </head>
 <body>
@@ -71,6 +87,8 @@
   const UploadIcon = (p) => /* @__PURE__ */ React.createElement(Icon, { ...p }, /* @__PURE__ */ React.createElement("path", { d: "M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" }), /* @__PURE__ */ React.createElement("path", { d: "M17 8l-5-5-5 5" }), /* @__PURE__ */ React.createElement("path", { d: "M12 3v12" }));
   const Plug = (p) => /* @__PURE__ */ React.createElement(Icon, { ...p }, /* @__PURE__ */ React.createElement("path", { d: "M12 22v-5" }), /* @__PURE__ */ React.createElement("path", { d: "M9 8V2M15 8V2" }), /* @__PURE__ */ React.createElement("path", { d: "M18 8a2 2 0 0 1 2 2c0 4-3.5 7-8 7s-8-3-8-7a2 2 0 0 1 2-2Z" }));
   const Printer = (p) => /* @__PURE__ */ React.createElement(Icon, { ...p }, /* @__PURE__ */ React.createElement("path", { d: "M6 9V2h12v7" }), /* @__PURE__ */ React.createElement("path", { d: "M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2" }), /* @__PURE__ */ React.createElement("rect", { x: "6", y: "14", width: "12", height: "8" }));
+  const UsersIcon = (p) => /* @__PURE__ */ React.createElement(Icon, { ...p }, /* @__PURE__ */ React.createElement("path", { d: "M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" }), /* @__PURE__ */ React.createElement("circle", { cx: 9, cy: 7, r: 4 }), /* @__PURE__ */ React.createElement("path", { d: "M22 21v-2a4 4 0 0 0-3-3.87" }), /* @__PURE__ */ React.createElement("path", { d: "M16 3.13a4 4 0 0 1 0 7.75" }));
+  const LogOut = (p) => /* @__PURE__ */ React.createElement(Icon, { ...p }, /* @__PURE__ */ React.createElement("path", { d: "M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" }), /* @__PURE__ */ React.createElement("path", { d: "m16 17 5-5-5-5" }), /* @__PURE__ */ React.createElement("path", { d: "M21 12H9" }));
   const Cloud = (p) => /* @__PURE__ */ React.createElement(Icon, { ...p }, /* @__PURE__ */ React.createElement("path", { d: "M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z" }));
   const FileText = (p) => /* @__PURE__ */ React.createElement(Icon, { ...p }, /* @__PURE__ */ React.createElement("path", { d: "M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2Z" }), /* @__PURE__ */ React.createElement("path", { d: "M14 2v6h6" }), /* @__PURE__ */ React.createElement("path", { d: "M9 13h6M9 17h6M9 9h1" }));
   const Copy = (p) => /* @__PURE__ */ React.createElement(Icon, { ...p }, /* @__PURE__ */ React.createElement("rect", { x: "9", y: "9", width: "13", height: "13", rx: "2" }), /* @__PURE__ */ React.createElement("path", { d: "M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" }));
@@ -315,7 +333,7 @@
     return /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { className: "flex flex-wrap items-center gap-2 mb-4" }, pr && /* @__PURE__ */ React.createElement("span", { className: `text-[11px] font-medium px-2 py-1 rounded-full ring-1 ${pr.bg} ${pr.text} ${pr.ring}` }, pr.label, " priority"), /* @__PURE__ */ React.createElement("span", { className: `text-[11px] font-medium px-2 py-1 rounded-full ring-1 ${s.bg} ${s.text} ${s.ring}` }, s.label)), /* @__PURE__ */ React.createElement("div", { className: "grid grid-cols-2 sm:grid-cols-3 gap-x-4 gap-y-2 text-[13px] mb-5" }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("p", { className: "text-[10px] uppercase tracking-wide text-slate-500" }, "Machine"), /* @__PURE__ */ React.createElement("p", { className: "font-mono-data" }, t.machine || "\u2014")), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("p", { className: "text-[10px] uppercase tracking-wide text-slate-500" }, "Model"), /* @__PURE__ */ React.createElement("p", { className: "font-mono-data" }, t.model || "\u2014")), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("p", { className: "text-[10px] uppercase tracking-wide text-slate-500" }, "Serial number"), /* @__PURE__ */ React.createElement("p", { className: "font-mono-data" }, t.serialNumber || "\u2014")), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("p", { className: "text-[10px] uppercase tracking-wide text-slate-500" }, "Host name"), /* @__PURE__ */ React.createElement("p", { className: "font-mono-data" }, t.hostName || "\u2014")), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("p", { className: "text-[10px] uppercase tracking-wide text-slate-500" }, "Engineer"), /* @__PURE__ */ React.createElement("p", null, t.engineerName || "\u2014")), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("p", { className: "text-[10px] uppercase tracking-wide text-slate-500" }, "Customer"), /* @__PURE__ */ React.createElement("p", null, t.customerName || "\u2014")), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("p", { className: "text-[10px] uppercase tracking-wide text-slate-500" }, "Site"), /* @__PURE__ */ React.createElement("p", null, t.site || "\u2014")), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("p", { className: "text-[10px] uppercase tracking-wide text-slate-500" }, "Area"), /* @__PURE__ */ React.createElement("p", null, t.area || "\u2014")), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("p", { className: "text-[10px] uppercase tracking-wide text-slate-500" }, "GST number"), /* @__PURE__ */ React.createElement("p", { className: "font-mono-data" }, t.gstNumber || "\u2014")), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("p", { className: "text-[10px] uppercase tracking-wide text-slate-500" }, "Start date"), /* @__PURE__ */ React.createElement("p", { className: "font-mono-data" }, fmtDate(t.startDate))), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("p", { className: "text-[10px] uppercase tracking-wide text-slate-500" }, "Open date"), /* @__PURE__ */ React.createElement("p", { className: "font-mono-data" }, fmtDate(t.openDate))), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("p", { className: "text-[10px] uppercase tracking-wide text-slate-500" }, "Close date"), /* @__PURE__ */ React.createElement("p", { className: "font-mono-data" }, t.closeDate ? fmtDate(t.closeDate) : "\u2014"))), t.description && /* @__PURE__ */ React.createElement("div", { className: "mb-4" }, /* @__PURE__ */ React.createElement("p", { className: "text-[10px] uppercase tracking-wide text-slate-500 mb-1" }, "Description / work done"), /* @__PURE__ */ React.createElement("p", { className: "text-[13px] whitespace-pre-wrap" }, t.description)), t.remarks && /* @__PURE__ */ React.createElement("div", { className: "mb-4" }, /* @__PURE__ */ React.createElement("p", { className: "text-[10px] uppercase tracking-wide text-slate-500 mb-1" }, "Remarks"), /* @__PURE__ */ React.createElement("p", { className: "text-[13px] whitespace-pre-wrap" }, t.remarks)), /* @__PURE__ */ React.createElement("div", { className: "mb-4" }, /* @__PURE__ */ React.createElement("p", { className: "text-[10px] uppercase tracking-wide text-slate-500 mb-2" }, "Full update history (", t.updates.length, ")"), t.updates.length === 0 ? /* @__PURE__ */ React.createElement("p", { className: "text-[13px] text-slate-500" }, "No updates logged yet.") : /* @__PURE__ */ React.createElement("ul", { className: "space-y-3" }, [...t.updates].sort((a, b) => (a.date || "").localeCompare(b.date || "")).map((u) => /* @__PURE__ */ React.createElement("li", { key: u.id, className: "text-[13px] border-l-2 border-slate-700 pl-3" }, /* @__PURE__ */ React.createElement("div", { className: "flex items-baseline gap-2 text-[11px] font-mono-data text-cyan-400/70 mb-0.5" }, /* @__PURE__ */ React.createElement("span", null, fmtDate(u.date)), /* @__PURE__ */ React.createElement("span", { className: "text-slate-600" }, "\xB7"), /* @__PURE__ */ React.createElement("span", null, u.time)), /* @__PURE__ */ React.createElement("p", { className: "whitespace-pre-wrap" }, u.text))))), (t.attachments || []).length > 0 && /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("p", { className: "text-[10px] uppercase tracking-wide text-slate-500 mb-2" }, "Attachments (", t.attachments.length, ")"), /* @__PURE__ */ React.createElement("div", { className: "grid grid-cols-3 sm:grid-cols-4 gap-2" }, t.attachments.map((a) => /* @__PURE__ */ React.createElement("div", { key: a.id, className: "border border-slate-800 rounded-lg overflow-hidden" }, a.type && a.type.startsWith("image/") ? /* @__PURE__ */ React.createElement("img", { src: a.dataUrl, alt: a.name, className: "w-full h-16 object-cover" }) : /* @__PURE__ */ React.createElement("div", { className: "w-full h-16 flex items-center justify-center text-[10px] text-slate-500 px-1 text-center" }, a.name))))));
   }
   function TaskDetailModal({ task, onClose, onPrint, onExportWord, onToggleStatus, accentColor }) {
-    return /* @__PURE__ */ React.createElement("div", { className: "fixed inset-0 bg-black/60 z-30 flex items-center justify-center p-4 no-print", onClick: onClose }, /* @__PURE__ */ React.createElement("div", { className: "bg-[#111826] border border-slate-800 rounded-xl w-full max-w-2xl max-h-[88vh] overflow-y-auto", onClick: (e) => e.stopPropagation() }, /* @__PURE__ */ React.createElement("div", { className: "flex items-center justify-between gap-3 p-5 border-b border-slate-800 sticky top-0 bg-[#111826] flex-wrap" }, /* @__PURE__ */ React.createElement("h2", { className: "text-sm font-semibold text-slate-100 truncate" }, task.taskName), /* @__PURE__ */ React.createElement("div", { className: "flex items-center gap-2 shrink-0" }, /* @__PURE__ */ React.createElement("button", { onClick: onToggleStatus, className: "flex items-center gap-1.5 font-medium text-[12px] px-3 py-1.5 rounded-lg text-[#06222b]", style: { backgroundColor: task.status === "pending" ? "#34d399" : "#f59e0b" } }, task.status === "pending" ? /* @__PURE__ */ React.createElement(CheckCircle2, { size: 13 }) : /* @__PURE__ */ React.createElement(Circle, { size: 13 }), task.status === "pending" ? "Mark as closed" : "Reopen task"), /* @__PURE__ */ React.createElement("button", { onClick: onPrint, className: "flex items-center gap-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 text-[12px] px-3 py-1.5 rounded-lg" }, /* @__PURE__ */ React.createElement(Printer, { size: 13 }), " Print PDF"), /* @__PURE__ */ React.createElement("button", { onClick: onExportWord, className: "flex items-center gap-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 text-[12px] px-3 py-1.5 rounded-lg" }, /* @__PURE__ */ React.createElement(FileText, { size: 13 }), " Word"), /* @__PURE__ */ React.createElement("button", { onClick: onClose, className: "text-slate-500 hover:text-slate-200" }, /* @__PURE__ */ React.createElement(X, { size: 18 })))), /* @__PURE__ */ React.createElement("div", { className: "p-5" }, /* @__PURE__ */ React.createElement(TaskDetailBody, { t: task }))));
+    return /* @__PURE__ */ React.createElement("div", { className: "fixed inset-0 bg-black/60 z-30 flex items-center justify-center p-4 no-print", onClick: onClose }, /* @__PURE__ */ React.createElement("div", { className: "bg-[#111826] border border-slate-800 rounded-xl w-full max-w-2xl max-h-[88vh] overflow-y-auto", onClick: (e) => e.stopPropagation() }, /* @__PURE__ */ React.createElement("div", { className: "flex items-center justify-between gap-3 p-5 border-b border-slate-800 sticky top-0 bg-[#111826] flex-wrap" }, /* @__PURE__ */ React.createElement("h2", { className: "text-sm font-semibold text-slate-100 truncate" }, task.taskName), /* @__PURE__ */ React.createElement("div", { className: "flex items-center gap-2 shrink-0" }, /* @__PURE__ */ React.createElement("button", { title: "Mark status", onClick: onToggleStatus, className: "flex items-center gap-1.5 font-medium text-[12px] px-3 py-1.5 rounded-lg text-[#06222b]", style: { backgroundColor: task.status === "pending" ? "#34d399" : "#f59e0b" } }, task.status === "pending" ? /* @__PURE__ */ React.createElement(CheckCircle2, { size: 13 }) : /* @__PURE__ */ React.createElement(Circle, { size: 13 }), task.status === "pending" ? "Mark as closed" : "Reopen task"), /* @__PURE__ */ React.createElement("button", { title: "Print PDF", onClick: onPrint, className: "flex items-center gap-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 text-[12px] px-3 py-1.5 rounded-lg" }, /* @__PURE__ */ React.createElement(Printer, { size: 13 }), " Print PDF"), /* @__PURE__ */ React.createElement("button", { title: "Download Word", onClick: onExportWord, className: "flex items-center gap-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 text-[12px] px-3 py-1.5 rounded-lg" }, /* @__PURE__ */ React.createElement(FileText, { size: 13 }), " Word"), /* @__PURE__ */ React.createElement("button", { onClick: onClose, className: "text-slate-500 hover:text-slate-200" }, /* @__PURE__ */ React.createElement(X, { size: 18 })))), /* @__PURE__ */ React.createElement("div", { className: "p-5" }, /* @__PURE__ */ React.createElement(TaskDetailBody, { t: task }))));
   }
   function WordTemplateModal({ wordTemplate, setWordTemplate, onClose, accentColor }) {
     const toggles = [
@@ -352,7 +370,7 @@
   /* ---- Google Drive sync engine ---- */
   const DRIVE_FILE_NAME = "task-scheduler-data.json";
   const DRIVE_SCOPE = "https://www.googleapis.com/auth/drive.file";
-  const DRIVE_KEYS = ["appTitle", "logo", "wordTemplate", "tasks", "machines", "models", "serials", "hosts", "engineers", "customers", "sites", "areas", "themeKey", "accentColor"];
+  const DRIVE_KEYS = ["appTitle", "logo", "wordTemplate", "users", "rolePerms", "recovery", "tasks", "machines", "models", "serials", "hosts", "engineers", "customers", "sites", "areas", "themeKey", "accentColor"];
   function lsGet(k) {
     try { return localStorage.getItem(k); } catch (e) { return null; }
   }
@@ -539,6 +557,216 @@
       }
     ), /* @__PURE__ */ React.createElement("div", { className: "flex items-center gap-2 mb-1" }, /* @__PURE__ */ React.createElement("span", { className: "w-2 h-2 rounded-full", style: { backgroundColor: dots[status] || "#64748b" } }), /* @__PURE__ */ React.createElement("span", { className: "text-[13px] text-slate-200" }, labels[status] || status)), message && /* @__PURE__ */ React.createElement("p", { className: "text-[12px] text-slate-400 mb-3" }, message), /* @__PURE__ */ React.createElement("div", { className: "mb-3" }), !enabled ? /* @__PURE__ */ React.createElement("button", { onClick: onConnect, className: "w-full font-medium text-sm px-4 py-2 rounded-lg text-[#06222b]", style: { backgroundColor: accentColor } }, "Connect Google Drive") : /* @__PURE__ */ React.createElement("div", { className: "space-y-2" }, (status === "needs-reconnect" || status === "error") && /* @__PURE__ */ React.createElement("button", { onClick: onConnect, className: "w-full font-medium text-sm px-4 py-2 rounded-lg text-[#06222b]", style: { backgroundColor: accentColor } }, "Reconnect"), /* @__PURE__ */ React.createElement("button", { onClick: onSyncNow, className: "w-full text-sm bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg py-2" }, "Sync now"), /* @__PURE__ */ React.createElement("button", { onClick: onDisconnect, className: "w-full text-sm text-red-400 hover:text-red-300 rounded-lg py-2" }, "Disconnect")), /* @__PURE__ */ React.createElement("p", { className: "text-[11px] text-slate-600 mt-4 leading-relaxed" }, "Changes sync automatically a few seconds after you make them, and every 30 seconds the app checks for changes from your other device. If both devices are edited at the same moment, the app asks which version to keep. Wallpaper stays on each device and is not synced.")));
   }
+  /* ---- User accounts and permissions (simple in-app roles) ---- */
+  const ROLE_LABELS = { viewer: "Level 1 \u2014 Browse", engineer: "Level 2 \u2014 Engineer", admin: "Admin" };
+  const PERM_LABELS = [
+    ["viewAll", "See every engineer's tasks (otherwise only their own engineer's)"],
+    ["edit", "Create and edit tasks and updates"],
+    ["del", "Delete tasks"],
+    ["reports", "Create reports (Print, Word, Excel, CSV)"],
+  ];
+  const DEFAULT_ROLE_PERMS = {
+    viewer: { viewAll: true, edit: false, del: false, reports: false },
+    engineer: { viewAll: false, edit: false, del: false, reports: true },
+  };
+  function userCan(user, rolePerms, perm, hasUsers) {
+    if (!hasUsers) return true;
+    if (!user) return false;
+    if (user.role === "admin") return true;
+    if (perm === "admin") return false;
+    const p = (rolePerms && rolePerms[user.role]) || DEFAULT_ROLE_PERMS[user.role] || {};
+    return !!p[perm];
+  }
+  function visibleTasksFor(tasks, user, rolePerms, hasUsers) {
+    if (!hasUsers || !user || user.role === "admin") return tasks;
+    if (userCan(user, rolePerms, "viewAll", true)) return tasks;
+    const eng = (user.engineerName || "").trim().toLowerCase();
+    return tasks.filter((t) => eng && (t.engineerName || "").trim().toLowerCase() === eng);
+  }
+  function randomHex(n) {
+    const a = new Uint8Array(n);
+    if (window.crypto && window.crypto.getRandomValues) window.crypto.getRandomValues(a);
+    else for (let i = 0; i < n; i++) a[i] = Math.floor(Math.random() * 256);
+    return Array.from(a).map((b) => b.toString(16).padStart(2, "0")).join("");
+  }
+  function makeRecoveryKey() {
+    const alphabet = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+    const a = new Uint8Array(12);
+    if (window.crypto && window.crypto.getRandomValues) window.crypto.getRandomValues(a);
+    else for (let i = 0; i < 12; i++) a[i] = Math.floor(Math.random() * 256);
+    const s = Array.from(a).map((b) => alphabet[b % alphabet.length]).join("");
+    return s.slice(0, 4) + "-" + s.slice(4, 8) + "-" + s.slice(8, 12);
+  }
+  async function hashPassword(salt, password) {
+    const text = salt + ":" + password;
+    try {
+      if (window.crypto && window.crypto.subtle && window.TextEncoder) {
+        const buf = await window.crypto.subtle.digest("SHA-256", new TextEncoder().encode(text));
+        return "s:" + Array.from(new Uint8Array(buf)).map((b) => b.toString(16).padStart(2, "0")).join("");
+      }
+    } catch (e) { /* fall through to simple hash */ }
+    return "c:" + cyrb53(text) + cyrb53(text + "#");
+  }
+  async function makeCredential(secret) {
+    const salt = randomHex(16);
+    return { salt, hash: await hashPassword(salt, secret) };
+  }
+  async function checkCredential(cred, secret) {
+    if (!cred || !cred.salt || !cred.hash) return false;
+    return (await hashPassword(cred.salt, secret)) === cred.hash;
+  }
+  /* ---- end accounts and permissions ---- */
+  function readStoredAuth() {
+    const empty = { users: [], rolePerms: null, recovery: null };
+    try {
+      const raw = lsGet(LOCAL_STORAGE_KEY);
+      if (!raw) return empty;
+      const d = JSON.parse(raw);
+      return { users: Array.isArray(d.users) ? d.users : [], rolePerms: d.rolePerms || null, recovery: d.recovery || null };
+    } catch (e) {
+      return empty;
+    }
+  }
+  function LoginScreen({ appTitle, logo, accentColor, theme, users, onLogin, onRecover }) {
+    const [mode, setMode] = useState("login");
+    const [username, setUsername] = useState("");
+    const [password, setPassword] = useState("");
+    const [remember, setRemember] = useState(false);
+    const [recKey, setRecKey] = useState("");
+    const [newPass, setNewPass] = useState("");
+    const [error, setError] = useState("");
+    const [notice, setNotice] = useState("");
+    const [busy, setBusy] = useState(false);
+    async function submit(e) {
+      e.preventDefault();
+      setBusy(true);
+      setError("");
+      if (mode === "login") {
+        const u = users.find((x) => x.username.toLowerCase() === username.trim().toLowerCase());
+        const good = u ? await checkCredential(u, password) : false;
+        if (!good) {
+          setError("Incorrect username or password.");
+          setBusy(false);
+          return;
+        }
+        onLogin(u, remember);
+        return;
+      }
+      if (newPass.length < 4) {
+        setError("New password must be at least 4 characters.");
+        setBusy(false);
+        return;
+      }
+      const err = await onRecover(username.trim(), recKey.trim().toUpperCase(), newPass);
+      if (err) {
+        setError(err);
+        setBusy(false);
+        return;
+      }
+      setMode("login");
+      setPassword("");
+      setRecKey("");
+      setNewPass("");
+      setNotice("Password reset. Sign in with your new password.");
+      setBusy(false);
+    }
+    const field = "w-full bg-[#0b0f14] border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-100 placeholder-slate-600 focus:outline-none focus:ring-2 focus:ring-cyan-400/40 mb-3";
+    return /* @__PURE__ */ React.createElement("div", { className: "min-h-screen flex items-center justify-center p-4", style: { backgroundColor: theme.app } }, /* @__PURE__ */ React.createElement("form", { onSubmit: submit, className: "w-full max-w-sm p-6 rounded-xl border", style: { backgroundColor: theme.panel, borderColor: theme.border } }, /* @__PURE__ */ React.createElement("div", { className: "flex flex-col items-center text-center mb-5" }, logo && /* @__PURE__ */ React.createElement("img", { src: logo, alt: "Logo", className: "w-16 h-16 rounded-xl object-cover mb-3" }), /* @__PURE__ */ React.createElement("h1", { className: "text-slate-100 font-semibold text-base" }, appTitle), /* @__PURE__ */ React.createElement("p", { className: "text-slate-500 text-[12px] mt-1" }, mode === "login" ? "Sign in to continue" : "Reset an admin password")), notice && /* @__PURE__ */ React.createElement("p", { className: "text-emerald-300 text-[12px] bg-emerald-400/10 rounded-lg p-2 mb-3" }, notice), /* @__PURE__ */ React.createElement("input", { value: username, onChange: (e) => setUsername(e.target.value), placeholder: mode === "login" ? "Username" : "Admin username", autoFocus: true, autoCapitalize: "none", className: field }), mode === "login" ? /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement("input", { type: "password", value: password, onChange: (e) => setPassword(e.target.value), placeholder: "Password", className: field }), /* @__PURE__ */ React.createElement("label", { className: "flex items-center gap-2 text-[12px] text-slate-400 mb-3 cursor-pointer" }, /* @__PURE__ */ React.createElement("input", { type: "checkbox", checked: remember, onChange: (e) => setRemember(e.target.checked) }), " Keep me signed in on this device")) : /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement("input", { value: recKey, onChange: (e) => setRecKey(e.target.value), placeholder: "Recovery key (XXXX-XXXX-XXXX)", className: field + " font-mono-data" }), /* @__PURE__ */ React.createElement("input", { type: "password", value: newPass, onChange: (e) => setNewPass(e.target.value), placeholder: "New password", className: field })), error && /* @__PURE__ */ React.createElement("p", { className: "text-red-400 text-[12px] mb-3" }, error), /* @__PURE__ */ React.createElement("button", { type: "submit", disabled: busy, className: "w-full font-medium text-sm px-4 py-2 rounded-lg text-[#06222b] disabled:opacity-60", style: { backgroundColor: accentColor } }, mode === "login" ? "Sign in" : "Reset password"), /* @__PURE__ */ React.createElement("button", { type: "button", onClick: () => {
+      setMode(mode === "login" ? "recover" : "login");
+      setError("");
+      setNotice("");
+    }, className: "w-full text-[12px] text-slate-500 hover:text-slate-300 mt-3" }, mode === "login" ? "Forgot password?" : "Back to sign in"), /* @__PURE__ */ React.createElement("p", { className: "text-slate-600 text-[10px] text-center mt-4 leading-relaxed" }, "Simple access control to keep each person to their own role. It is not strong security.")));
+  }
+  function UsersModal({ users, setUsers, rolePerms, setRolePerms, engineers, setRecovery, currentUser, onFirstAdmin, onClose, accentColor }) {
+    const blank = { username: "", displayName: "", password: "", role: "viewer", engineerName: "" };
+    const [nu, setNu] = useState(blank);
+    const [error, setError] = useState("");
+    const [shownKey, setShownKey] = useState("");
+    const noUsers = users.length === 0;
+    const adminCount = users.filter((u) => u.role === "admin").length;
+    const input = "w-full bg-[#0b0f14] border border-slate-700 rounded-lg px-3 py-2 text-[13px] text-slate-100 placeholder-slate-600 focus:outline-none focus:ring-2 focus:ring-cyan-400/40";
+    const small = "bg-[#0b0f14] border border-slate-700 rounded-lg px-2 py-1 text-[12px] text-slate-200 focus:outline-none";
+    async function addUser(e) {
+      e.preventDefault();
+      setError("");
+      const username = nu.username.trim();
+      const role = noUsers ? "admin" : nu.role;
+      if (!username) {
+        setError("Enter a username.");
+        return;
+      }
+      if (users.some((u) => u.username.toLowerCase() === username.toLowerCase())) {
+        setError("That username is already taken.");
+        return;
+      }
+      if (nu.password.length < 4) {
+        setError("Password must be at least 4 characters.");
+        return;
+      }
+      if (role === "engineer" && !nu.engineerName) {
+        setError("Pick which engineer this Level 2 user is.");
+        return;
+      }
+      const cred = await makeCredential(nu.password);
+      const user = { id: "u" + Date.now().toString(36) + randomHex(2), username, displayName: nu.displayName.trim() || username, role, engineerName: role === "engineer" ? nu.engineerName : "", ...cred };
+      setUsers((prev) => [...prev, user]);
+      if (noUsers) {
+        const key = makeRecoveryKey();
+        setRecovery(await makeCredential(key));
+        setShownKey(key);
+        onFirstAdmin(user);
+      }
+      setNu(blank);
+    }
+    function changeRole(u, role) {
+      if (u.role === "admin" && role !== "admin" && adminCount <= 1) {
+        setError("There must be at least one admin.");
+        return;
+      }
+      setError("");
+      setUsers((prev) => prev.map((x) => x.id === u.id ? { ...x, role, engineerName: role === "engineer" ? x.engineerName || engineers[0] || "" : "" } : x));
+    }
+    function changeEngineer(u, name) {
+      setUsers((prev) => prev.map((x) => x.id === u.id ? { ...x, engineerName: name } : x));
+    }
+    async function resetPassword(u) {
+      const p = window.prompt("New password for " + u.username + " (at least 4 characters):");
+      if (!p) return;
+      if (p.length < 4) {
+        setError("Password must be at least 4 characters.");
+        return;
+      }
+      const cred = await makeCredential(p);
+      setUsers((prev) => prev.map((x) => x.id === u.id ? { ...x, ...cred } : x));
+      window.alert("Password updated for " + u.username + ".");
+    }
+    function removeUser(u) {
+      if (u.role === "admin" && adminCount <= 1) {
+        setError("There must be at least one admin.");
+        return;
+      }
+      if (currentUser && u.id === currentUser.id) {
+        setError("You can't delete the account you are signed in with.");
+        return;
+      }
+      if (!window.confirm("Delete the account for " + u.username + "?")) return;
+      setError("");
+      setUsers((prev) => prev.filter((x) => x.id !== u.id));
+    }
+    async function newRecoveryKey() {
+      const key = makeRecoveryKey();
+      setRecovery(await makeCredential(key));
+      setShownKey(key);
+    }
+    return /* @__PURE__ */ React.createElement("div", { className: "fixed inset-0 bg-black/60 z-30 flex items-start sm:items-center justify-center p-4 overflow-y-auto no-print", onClick: onClose }, /* @__PURE__ */ React.createElement("div", { className: "bg-[#111826] border border-slate-800 rounded-xl p-5 w-full max-w-2xl my-4", onClick: (e) => e.stopPropagation() }, /* @__PURE__ */ React.createElement("div", { className: "flex items-center justify-between mb-1" }, /* @__PURE__ */ React.createElement("h2", { className: "text-sm font-semibold text-slate-100" }, "Users & permissions"), /* @__PURE__ */ React.createElement("button", { onClick: onClose, className: "text-slate-500 hover:text-slate-200" }, /* @__PURE__ */ React.createElement(X, { size: 18 }))), /* @__PURE__ */ React.createElement("p", { className: "text-[12px] text-slate-500 mb-4" }, "Simple access control inside the app. It keeps each person to their own role, but it is not strong security: anyone with technical skill, or access to your Drive file or backups, can get around it. Editing the app's own HTML is done in GitHub by the repository owner."), noUsers && /* @__PURE__ */ React.createElement("p", { className: "text-[12px] text-amber-300 bg-amber-400/10 rounded-lg p-2.5 mb-4" }, "No accounts yet, so everyone currently has full access. Create the first account below (it becomes an Admin) to switch logins on."), shownKey && /* @__PURE__ */ React.createElement("div", { className: "bg-emerald-400/10 border border-emerald-400/30 rounded-lg p-3 mb-4" }, /* @__PURE__ */ React.createElement("p", { className: "text-[12px] text-emerald-200 mb-1" }, "Recovery key (shown once, write it down):"), /* @__PURE__ */ React.createElement("p", { className: "font-mono-data text-lg text-emerald-100 tracking-wider" }, shownKey), /* @__PURE__ */ React.createElement("p", { className: "text-[11px] text-emerald-200/70 mt-1" }, 'If an admin forgets their password, "Forgot password?" on the sign-in screen resets it with this key.')), users.length > 0 && /* @__PURE__ */ React.createElement("div", { className: "mb-5" }, /* @__PURE__ */ React.createElement("h3", { className: "text-[11px] uppercase tracking-wide text-slate-500 mb-2" }, "Accounts"), /* @__PURE__ */ React.createElement("div", { className: "space-y-2" }, users.map((u) => /* @__PURE__ */ React.createElement("div", { key: u.id, className: "bg-[#0b0f14] border border-slate-800 rounded-lg p-2.5 flex flex-wrap items-center gap-2" }, /* @__PURE__ */ React.createElement("div", { className: "min-w-0 mr-auto" }, /* @__PURE__ */ React.createElement("p", { className: "text-[13px] text-slate-100 truncate" }, u.displayName, " ", /* @__PURE__ */ React.createElement("span", { className: "text-slate-500 font-mono-data text-[11px]" }, "@", u.username))), /* @__PURE__ */ React.createElement("select", { value: u.role, onChange: (e) => changeRole(u, e.target.value), className: small }, /* @__PURE__ */ React.createElement("option", { value: "viewer" }, ROLE_LABELS.viewer), /* @__PURE__ */ React.createElement("option", { value: "engineer" }, ROLE_LABELS.engineer), /* @__PURE__ */ React.createElement("option", { value: "admin" }, ROLE_LABELS.admin)), u.role === "engineer" && /* @__PURE__ */ React.createElement("select", { value: u.engineerName, onChange: (e) => changeEngineer(u, e.target.value), className: small }, !engineers.includes(u.engineerName) && /* @__PURE__ */ React.createElement("option", { value: u.engineerName }, u.engineerName || "Pick engineer"), engineers.map((n) => /* @__PURE__ */ React.createElement("option", { key: n, value: n }, n))), /* @__PURE__ */ React.createElement("button", { onClick: () => resetPassword(u), className: "text-[12px] text-slate-400 hover:text-slate-200" }, "Reset password"), /* @__PURE__ */ React.createElement("button", { onClick: () => removeUser(u), className: "text-[12px] text-red-400 hover:text-red-300" }, "Delete"))))), /* @__PURE__ */ React.createElement("form", { onSubmit: addUser, className: "mb-5" }, /* @__PURE__ */ React.createElement("h3", { className: "text-[11px] uppercase tracking-wide text-slate-500 mb-2" }, noUsers ? "Create the first admin account" : "Add an account"), /* @__PURE__ */ React.createElement("div", { className: "grid grid-cols-1 sm:grid-cols-2 gap-2 mb-2" }, /* @__PURE__ */ React.createElement("input", { value: nu.username, onChange: (e) => setNu({ ...nu, username: e.target.value }), placeholder: "Username", autoCapitalize: "none", className: input }), /* @__PURE__ */ React.createElement("input", { value: nu.displayName, onChange: (e) => setNu({ ...nu, displayName: e.target.value }), placeholder: "Display name (optional)", className: input }), /* @__PURE__ */ React.createElement("input", { type: "password", value: nu.password, onChange: (e) => setNu({ ...nu, password: e.target.value }), placeholder: "Password", className: input }), !noUsers && /* @__PURE__ */ React.createElement("select", { value: nu.role, onChange: (e) => setNu({ ...nu, role: e.target.value }), className: input }, /* @__PURE__ */ React.createElement("option", { value: "viewer" }, ROLE_LABELS.viewer), /* @__PURE__ */ React.createElement("option", { value: "engineer" }, ROLE_LABELS.engineer), /* @__PURE__ */ React.createElement("option", { value: "admin" }, ROLE_LABELS.admin)), !noUsers && nu.role === "engineer" && /* @__PURE__ */ React.createElement("select", { value: nu.engineerName, onChange: (e) => setNu({ ...nu, engineerName: e.target.value }), className: input }, /* @__PURE__ */ React.createElement("option", { value: "" }, "Which engineer? (from your Engineers list)"), engineers.map((n) => /* @__PURE__ */ React.createElement("option", { key: n, value: n }, n)))), error && /* @__PURE__ */ React.createElement("p", { className: "text-red-400 text-[12px] mb-2" }, error), /* @__PURE__ */ React.createElement("button", { type: "submit", className: "font-medium text-sm px-4 py-2 rounded-lg text-[#06222b]", style: { backgroundColor: accentColor } }, noUsers ? "Create admin account" : "Add account")), !noUsers && /* @__PURE__ */ React.createElement("div", { className: "mb-5" }, /* @__PURE__ */ React.createElement("h3", { className: "text-[11px] uppercase tracking-wide text-slate-500 mb-2" }, "What each level can do"), /* @__PURE__ */ React.createElement("div", { className: "overflow-x-auto" }, /* @__PURE__ */ React.createElement("table", { className: "w-full text-[12px] text-slate-300" }, /* @__PURE__ */ React.createElement("thead", null, /* @__PURE__ */ React.createElement("tr", { className: "text-slate-500 text-left" }, /* @__PURE__ */ React.createElement("th", { className: "py-1 pr-2 font-normal" }, "Permission"), /* @__PURE__ */ React.createElement("th", { className: "py-1 px-2 font-normal text-center" }, "Level 1"), /* @__PURE__ */ React.createElement("th", { className: "py-1 px-2 font-normal text-center" }, "Level 2"), /* @__PURE__ */ React.createElement("th", { className: "py-1 px-2 font-normal text-center" }, "Admin"))), /* @__PURE__ */ React.createElement("tbody", null, PERM_LABELS.map(([key, label]) => /* @__PURE__ */ React.createElement("tr", { key, className: "border-t border-slate-800" }, /* @__PURE__ */ React.createElement("td", { className: "py-1.5 pr-2" }, label), ["viewer", "engineer"].map((r) => /* @__PURE__ */ React.createElement("td", { key: r, className: "py-1.5 px-2 text-center" }, /* @__PURE__ */ React.createElement(
+      "input",
+      {
+        type: "checkbox",
+        checked: !!(rolePerms[r] && rolePerms[r][key]),
+        onChange: (e) => setRolePerms((prev) => ({ ...prev, [r]: { ...prev[r], [key]: e.target.checked } }))
+      }
+    ))), /* @__PURE__ */ React.createElement("td", { className: "py-1.5 px-2 text-center text-emerald-400" }, "\u2713")))))), /* @__PURE__ */ React.createElement("p", { className: "text-[11px] text-slate-600 mt-2" }, "Only Admins can change settings, lists, templates, backups, Drive sync and accounts. Level 2 users are tied to one engineer from your Engineers list."), /* @__PURE__ */ React.createElement("button", { onClick: newRecoveryKey, className: "text-[12px] text-slate-400 hover:text-slate-200 mt-2" }, "Generate a new recovery key")), /* @__PURE__ */ React.createElement("button", { onClick: onClose, className: "w-full text-sm bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg py-2" }, "Close")));
+  }
   function TaskScheduler() {
     const [appTitle, setAppTitle] = useState("Task Scheduler");
     const [editingTitle, setEditingTitle] = useState(false);
@@ -547,6 +775,32 @@
     const [wallpaper, setWallpaper] = useState(null);
     const wallpaperInputRef = useRef(null);
     const [wallpaperOpacity, setWallpaperOpacity] = useState(0.82);
+    const storedAuthRef = useRef(null);
+    if (!storedAuthRef.current) storedAuthRef.current = readStoredAuth();
+    const [users, setUsers] = useState(storedAuthRef.current.users);
+    const [rolePerms, setRolePerms] = useState(() => {
+      const s = storedAuthRef.current.rolePerms || {};
+      return { viewer: { ...DEFAULT_ROLE_PERMS.viewer, ...(s.viewer || {}) }, engineer: { ...DEFAULT_ROLE_PERMS.engineer, ...(s.engineer || {}) } };
+    });
+    const [recovery, setRecovery] = useState(storedAuthRef.current.recovery);
+    const [sessionUserId, setSessionUserId] = useState(() => lsGet("ts-session") || null);
+    const [showUsers, setShowUsers] = useState(false);
+    const currentUser = users.find((u) => u.id === sessionUserId) || null;
+    const hasUsers = users.length > 0;
+    const can = (perm) => userCan(currentUser, rolePerms, perm, hasUsers);
+    const guard = (perm) => {
+      if (can(perm)) return true;
+      window.alert("Your account doesn't have permission to do that.");
+      return false;
+    };
+    useEffect(() => {
+      const b = document.body.classList;
+      const set = (cls, on) => (on ? b.add(cls) : b.remove(cls));
+      set("perm-noedit", !can("edit"));
+      set("perm-nodelete", !can("del"));
+      set("perm-noreports", !can("reports"));
+      set("perm-noadmin", !can("admin"));
+    }, [users, rolePerms, sessionUserId]);
     const [showWordTemplate, setShowWordTemplate] = useState(false);
     const [wordTemplate, setWordTemplate] = useState({
       includeLogo: true, includeDetailsTable: true, includeDescription: true, includeRemarks: true,
@@ -614,7 +868,7 @@
         model: "",
         serialNumber: "",
         hostName: "",
-        engineerName: "",
+        engineerName: currentUser && currentUser.role === "engineer" ? currentUser.engineerName : "",
         customerName: "",
         site: "",
         area: "",
@@ -687,7 +941,8 @@
           return arr.sort((a, b) => b.id - a.id);
       }
     }
-    const filteredTasks = sortTasks(tasks.filter(matchesFilter));
+    const visibleTasks = visibleTasksFor(tasks, currentUser, rolePerms, hasUsers);
+    const filteredTasks = sortTasks(visibleTasks.filter(matchesFilter));
     const filterActive = !!(dateFilter || monthFilter || search.trim() || statusFilter !== "all" || myDayOnly);
     const GROUP_LABELS = {
       status: (t) => t.status === "pending" ? "Pending" : "Closed",
@@ -717,6 +972,8 @@
     const closedCount = filteredTasks.length - pendingCount;
     function addTask(e) {
       e.preventDefault();
+      if (!guard("edit")) return;
+      e.preventDefault();
       if (!form.taskName.trim() || !form.machine.trim()) {
         setFormTab("details");
         return;
@@ -728,6 +985,7 @@
       setShowForm(false);
     }
     function toggleStatus(id) {
+      if (!guard("edit")) return;
       setTasks((prev) => prev.map((t) => {
         if (t.id !== id) return t;
         const newStatus = t.status === "pending" ? "closed" : "pending";
@@ -735,6 +993,7 @@
       }));
     }
     function deleteTask(id) {
+      if (!guard("del")) return;
       const idx = tasks.findIndex((x) => x.id === id);
       if (idx === -1) return;
       const t = tasks[idx];
@@ -759,29 +1018,34 @@
       });
     }
     function duplicateTask(id) {
+      if (!guard("edit")) return;
       const t = tasks.find((x) => x.id === id);
       if (!t) return;
       const copy = { ...t, id: nextId(), taskName: `${t.taskName} (copy)`, status: "pending", closeDate: "", startDate: todayISO(), openDate: todayISO(), updates: [], attachments: [] };
       setTasks((prev) => [copy, ...prev]);
     }
     function bulkCloseSelected() {
+      if (!guard("edit")) return;
       setTasks((prev) => prev.map((t) => selectedIds.includes(t.id) ? { ...t, status: "closed", closeDate: t.closeDate || todayISO() } : t));
       setSelectedIds([]);
     }
     function bulkDeleteSelected() {
+      if (!guard("del")) return;
       if (!window.confirm(`Delete ${selectedIds.length} selected task(s)? This can't be undone.`)) return;
       setTasks((prev) => prev.filter((t) => !selectedIds.includes(t.id)));
       setSelectedIds([]);
     }
     function bulkExportSelected(format) {
-      const list = tasks.filter((t) => selectedIds.includes(t.id));
+      const list = visibleTasks.filter((t) => selectedIds.includes(t.id));
       if (format === "csv") exportCSV(list);
       else exportExcel(list);
     }
     function updateTaskField(id, field, value) {
+      if (!guard("edit")) return;
       setTasks((prev) => prev.map((t) => t.id === id ? { ...t, [field]: value } : t));
     }
     function addAttachments(id, fileList) {
+      if (!guard("edit")) return;
       Array.from(fileList || []).forEach((file) => {
         const reader = new FileReader();
         reader.onload = () => {
@@ -792,9 +1056,11 @@
       });
     }
     function removeAttachment(taskId, attId) {
+      if (!guard("edit")) return;
       setTasks((prev) => prev.map((t) => t.id === taskId ? { ...t, attachments: (t.attachments || []).filter((a) => a.id !== attId) } : t));
     }
     function addUpdate(id) {
+      if (!guard("edit")) return;
       const draft = updateDraft[id] || {};
       const text = (draft.text || "").trim();
       if (!text) return;
@@ -807,16 +1073,19 @@
       setUpdateDraft((prev) => ({ ...prev, [id]: { text: "", date: todayISO() } }));
     }
     function editUpdateField(taskId, updateId, field, value) {
+      if (!guard("edit")) return;
       setTasks((prev) => prev.map(
         (t) => t.id === taskId ? { ...t, updates: t.updates.map((u) => u.id === updateId ? { ...u, [field]: value } : u) } : t
       ));
     }
     function deleteUpdateEntry(taskId, updateId) {
+      if (!guard("edit")) return;
       setTasks((prev) => prev.map(
         (t) => t.id === taskId ? { ...t, updates: t.updates.filter((u) => u.id !== updateId) } : t
       ));
     }
     function printSingleTask(task) {
+      if (!guard("reports")) return;
       setPrintTask(task);
       document.body.classList.add("printing-task");
       setTimeout(() => window.print(), 50);
@@ -827,6 +1096,7 @@
         .replace(/"/g, "&quot;").replace(/\n/g, "<br/>");
     }
     function exportTaskWord(task) {
+      if (!guard("reports")) return;
       const wt = wordTemplate;
       const pr = PRIORITY[task.priority];
       const sortedUpdates = [...task.updates].sort((a, b) => (a.date || "").localeCompare(b.date || ""));
@@ -897,7 +1167,7 @@
         const tag = e.target && e.target.tagName || "";
         const typing = tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT" || e.target && e.target.isContentEditable;
         if (typing || locked) return;
-        if (e.key === "n" || e.key === "N") {
+        if ((e.key === "n" || e.key === "N") && !document.body.classList.contains("perm-noedit")) {
           e.preventDefault();
           setShowForm(true);
           setTimeout(() => newTaskInputRef.current && newTaskInputRef.current.focus(), 50);
@@ -948,6 +1218,7 @@
       }));
     }
     function exportExcel(list) {
+      if (!guard("reports")) return;
       const rows = taskExportRows(list || filteredTasks);
       const updateRows = [];
       (list || filteredTasks).forEach((t) => t.updates.forEach((u) => updateRows.push({
@@ -965,6 +1236,7 @@
       XLSX.writeFile(wb, `${appTitle.replace(/\s+/g, "-").toLowerCase()}-report-${stamp}.xlsx`);
     }
     function exportCSV(list) {
+      if (!guard("reports")) return;
       const rows = taskExportRows(list || filteredTasks);
       if (rows.length === 0) {
         window.alert("No tasks to export.");
@@ -982,7 +1254,7 @@
       URL.revokeObjectURL(url);
     }
     function currentBackupData() {
-      return { appTitle, logo, wallpaper, wallpaperOpacity, wordTemplate, tasks, machines, models, serials, hosts, engineers, customers, sites, areas, themeKey, accentColor, idCounter };
+      return { appTitle, logo, wallpaper, wallpaperOpacity, wordTemplate, users, rolePerms, recovery, tasks, machines, models, serials, hosts, engineers, customers, sites, areas, themeKey, accentColor, idCounter };
     }
     function applyBackupData(data) {
       if (typeof data.appTitle === "string") setAppTitle(data.appTitle);
@@ -990,6 +1262,9 @@
       if ("wallpaper" in data) setWallpaper(data.wallpaper);
       if (typeof data.wallpaperOpacity === "number") setWallpaperOpacity(data.wallpaperOpacity);
       if (data.wordTemplate && typeof data.wordTemplate === "object") setWordTemplate((prev) => ({ ...prev, ...data.wordTemplate }));
+      if (Array.isArray(data.users)) setUsers(data.users);
+      if (data.rolePerms && typeof data.rolePerms === "object") setRolePerms((prev) => ({ viewer: { ...prev.viewer, ...(data.rolePerms.viewer || {}) }, engineer: { ...prev.engineer, ...(data.rolePerms.engineer || {}) } }));
+      if ("recovery" in data) setRecovery(data.recovery);
       if (Array.isArray(data.tasks)) {
         setTasks(data.tasks);
         const ids = data.tasks.flatMap((t) => [t.id, ...(t.updates || []).map((u) => u.id), ...(t.attachments || []).map((a) => a.id)]).filter((n) => typeof n === "number");
@@ -1033,7 +1308,7 @@
         }
       }, 800);
       return () => clearTimeout(localSaveTimerRef.current);
-    }, [tasks, machines, models, serials, hosts, engineers, customers, sites, areas, appTitle, logo, wallpaper, wallpaperOpacity, wordTemplate, themeKey, accentColor]);
+    }, [tasks, machines, models, serials, hosts, engineers, customers, sites, areas, appTitle, logo, wallpaper, wallpaperOpacity, wordTemplate, users, rolePerms, recovery, themeKey, accentColor]);
 
     const [driveClientId, setDriveClientId] = useState(() => lsGet("ts-drive-client-id") || "");
     const [driveEnabled, setDriveEnabled] = useState(() => lsGet("ts-drive-enabled") === "1");
@@ -1138,7 +1413,7 @@
       if (driveTimerRef.current) clearTimeout(driveTimerRef.current);
       driveTimerRef.current = setTimeout(() => driveFnsRef.current.sync(), 2500);
       return () => clearTimeout(driveTimerRef.current);
-    }, [tasks, machines, models, serials, hosts, engineers, customers, sites, areas, appTitle, logo, wordTemplate, themeKey, accentColor, driveEnabled, driveTick]);
+    }, [tasks, machines, models, serials, hosts, engineers, customers, sites, areas, appTitle, logo, wordTemplate, users, rolePerms, recovery, themeKey, accentColor, driveEnabled, driveTick]);
     useEffect(() => {
       if (!driveEnabled || isFileProtocol) return;
       const tick = () => { if (!document.hidden) driveFnsRef.current.sync(); };
@@ -1149,6 +1424,7 @@
     const driveDotColor = { synced: "#34d399", syncing: "#fbbf24", "needs-reconnect": "#fbbf24", offline: "#fbbf24", error: "#f87171" }[driveStatus] || "#64748b";
 
     function exportBackup() {
+      if (!guard("admin")) return;
       const data = currentBackupData();
       const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
       const url = URL.createObjectURL(blob);
@@ -1159,6 +1435,7 @@
       URL.revokeObjectURL(url);
     }
     function importBackup(e) {
+      if (!guard("admin")) return;
       const file = e.target.files[0];
       if (!file) return;
       if (!window.confirm("Import this backup? It will replace all current tasks and lists.")) {
@@ -1177,6 +1454,7 @@
       e.target.value = "";
     }
     function exportMachineList() {
+      if (!guard("admin")) return;
       const data = { machines, models, serials, hosts, engineers, customers, sites, areas };
       const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
       const url = URL.createObjectURL(blob);
@@ -1187,6 +1465,7 @@
       URL.revokeObjectURL(url);
     }
     function importMachineList(e) {
+      if (!guard("admin")) return;
       const file = e.target.files[0];
       if (!file) return;
       const reader = new FileReader();
@@ -1224,6 +1503,7 @@
       applyBackupData(JSON.parse(text));
     }
     async function chooseBackupFile() {
+      if (!guard("admin")) return;
       if (!fsSupported) {
         window.alert("Your browser doesn't support auto-saving to a file (this needs Chrome or Edge). Use the manual Save/Load JSON buttons instead.");
         return;
@@ -1301,7 +1581,7 @@
       if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
       saveTimerRef.current = setTimeout(() => saveToHandle(fileHandle), 1200);
       return () => clearTimeout(saveTimerRef.current);
-    }, [tasks, machines, models, serials, hosts, engineers, customers, sites, areas, appTitle, logo, wallpaper, wallpaperOpacity, wordTemplate, themeKey, accentColor, fileHandle]);
+    }, [tasks, machines, models, serials, hosts, engineers, customers, sites, areas, appTitle, logo, wallpaper, wallpaperOpacity, wordTemplate, users, rolePerms, recovery, themeKey, accentColor, fileHandle]);
     function setupPin() {
       const p1 = window.prompt("Create a PIN (4+ digits):");
       if (!p1 || !p1.trim()) return;
@@ -1338,6 +1618,26 @@
         setPinError("Incorrect PIN. Try again.");
       }
     }
+    if (hasUsers && !currentUser) {
+      return /* @__PURE__ */ React.createElement(LoginScreen, {
+        appTitle,
+        logo,
+        accentColor,
+        theme,
+        users,
+        onLogin: (u, remember) => {
+          setSessionUserId(u.id);
+          lsSet("ts-session", remember ? u.id : null);
+        },
+        onRecover: async (uname, key, newPass) => {
+          const u = users.find((x) => x.username.toLowerCase() === uname.toLowerCase() && x.role === "admin");
+          if (!u || !(await checkCredential(recovery, key))) return "That admin username and recovery key don't match.";
+          const cred = await makeCredential(newPass);
+          setUsers((prev) => prev.map((x) => (x.id === u.id ? { ...x, ...cred } : x)));
+          return null;
+        }
+      });
+    }
     if (locked) {
       return /* @__PURE__ */ React.createElement("div", { className: "min-h-screen flex items-center justify-center", style: { backgroundColor: theme.app } }, /* @__PURE__ */ React.createElement("form", { onSubmit: attemptUnlock, className: "w-full max-w-xs p-6 rounded-xl border", style: { backgroundColor: theme.panel, borderColor: theme.border } }, /* @__PURE__ */ React.createElement("div", { className: "flex flex-col items-center text-center mb-4" }, /* @__PURE__ */ React.createElement("div", { className: "w-12 h-12 rounded-xl flex items-center justify-center mb-3", style: { backgroundColor: accentColor + "22" } }, /* @__PURE__ */ React.createElement(Lock, { size: 22, style: { color: accentColor } })), /* @__PURE__ */ React.createElement("h1", { className: "text-slate-100 font-semibold text-sm" }, appTitle, " is locked"), /* @__PURE__ */ React.createElement("p", { className: "text-slate-500 text-[11px] mt-1" }, "Enter your PIN to continue")), /* @__PURE__ */ React.createElement(
         "input",
@@ -1361,7 +1661,10 @@
       { key: "remarks", label: "Remarks" },
       { key: "gst", label: "GST No." }
     ];
-    return /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement("div", { className: "app-shell min-h-screen text-slate-200", style: wallpaper ? { backgroundImage: `linear-gradient(${hexToRgba(theme.app, wallpaperOpacity)}, ${hexToRgba(theme.app, wallpaperOpacity)}), url(${wallpaper})`, backgroundSize: "cover", backgroundPosition: "center", backgroundAttachment: "fixed", backgroundRepeat: "no-repeat" } : { backgroundColor: theme.app } }, showWordTemplate && /* @__PURE__ */ React.createElement(WordTemplateModal, { wordTemplate, setWordTemplate, onClose: () => setShowWordTemplate(false), accentColor }), showDrive && /* @__PURE__ */ React.createElement(DriveSyncModal, { clientId: driveClientId, setClientId: (v) => { setDriveClientId(v); lsSet("ts-drive-client-id", v.trim()); }, enabled: driveEnabled, status: driveStatus, message: driveMessage, onConnect: driveConnect, onSyncNow: () => driveRun(true), onDisconnect: driveDisconnect, onClose: () => setShowDrive(false), accentColor, isFile: isFileProtocol }), showManage && /* @__PURE__ */ React.createElement(
+    return /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement("div", { className: "app-shell min-h-screen text-slate-200", style: wallpaper ? { backgroundImage: `linear-gradient(${hexToRgba(theme.app, wallpaperOpacity)}, ${hexToRgba(theme.app, wallpaperOpacity)}), url(${wallpaper})`, backgroundSize: "cover", backgroundPosition: "center", backgroundAttachment: "fixed", backgroundRepeat: "no-repeat" } : { backgroundColor: theme.app } }, showWordTemplate && /* @__PURE__ */ React.createElement(WordTemplateModal, { wordTemplate, setWordTemplate, onClose: () => setShowWordTemplate(false), accentColor }), showUsers && can("admin") && /* @__PURE__ */ React.createElement(UsersModal, { users, setUsers, rolePerms, setRolePerms, engineers, setRecovery, currentUser, onFirstAdmin: (u) => {
+      setSessionUserId(u.id);
+      lsSet("ts-session", u.id);
+    }, onClose: () => setShowUsers(false), accentColor }), showDrive && /* @__PURE__ */ React.createElement(DriveSyncModal, { clientId: driveClientId, setClientId: (v) => { setDriveClientId(v); lsSet("ts-drive-client-id", v.trim()); }, enabled: driveEnabled, status: driveStatus, message: driveMessage, onConnect: driveConnect, onSyncNow: () => driveRun(true), onDisconnect: driveDisconnect, onClose: () => setShowDrive(false), accentColor, isFile: isFileProtocol }), showManage && /* @__PURE__ */ React.createElement(
       ManageListsModal,
       {
         machines,
@@ -1382,7 +1685,7 @@
     ), /* @__PURE__ */ React.createElement("header", { className: "border-b backdrop-blur sticky top-0 z-10", style: { ...(wallpaper ? glass(theme.header, 0.55) : { backgroundColor: theme.header + "cc" }), borderColor: theme.border } }, /* @__PURE__ */ React.createElement("div", { className: "max-w-5xl mx-auto px-5 py-5 flex items-center justify-between gap-3 flex-wrap" }, /* @__PURE__ */ React.createElement("div", { className: "flex items-center gap-4 min-w-0" }, /* @__PURE__ */ React.createElement("input", { type: "file", accept: "image/*", ref: logoInputRef, onChange: handleLogoChange, className: "hidden" }), /* @__PURE__ */ React.createElement(
       "button",
       {
-        onClick: () => logoInputRef.current && logoInputRef.current.click(),
+        onClick: () => can("admin") && logoInputRef.current && logoInputRef.current.click(),
         className: "w-24 h-24 rounded-2xl flex items-center justify-center overflow-hidden shrink-0 ring-1",
         style: { backgroundColor: accentColor + "1a", borderColor: accentColor, boxShadow: `inset 0 0 0 1px ${accentColor}55` },
         title: "Click to add / change logo"
@@ -1401,7 +1704,7 @@
         className: "text-xl font-semibold bg-transparent border-b text-slate-100 tracking-tight focus:outline-none",
         style: { borderColor: accentColor }
       }
-    ) : /* @__PURE__ */ React.createElement("button", { onClick: () => setEditingTitle(true), className: "flex items-center gap-1.5 group" }, /* @__PURE__ */ React.createElement("h1", { className: "text-xl font-semibold text-slate-100 tracking-tight truncate" }, appTitle), /* @__PURE__ */ React.createElement(Pencil, { size: 13, className: "text-slate-600 group-hover:text-slate-400 shrink-0" })), /* @__PURE__ */ React.createElement("p", { className: "text-[11px] text-slate-500 font-mono-data" }, (/* @__PURE__ */ new Date()).toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric", year: "numeric" })))), /* @__PURE__ */ React.createElement("div", { className: "flex items-center gap-2 flex-wrap no-print" }, /* @__PURE__ */ React.createElement("div", { className: "relative" }, /* @__PURE__ */ React.createElement("button", { onClick: () => {
+    ) : /* @__PURE__ */ React.createElement("button", { onClick: () => can("admin") && setEditingTitle(true), className: "flex items-center gap-1.5 group" }, /* @__PURE__ */ React.createElement("h1", { className: "text-xl font-semibold text-slate-100 tracking-tight truncate" }, appTitle), /* @__PURE__ */ React.createElement(Pencil, { size: 13, className: "text-slate-600 group-hover:text-slate-400 shrink-0" })), /* @__PURE__ */ React.createElement("p", { className: "text-[11px] text-slate-500 font-mono-data" }, (/* @__PURE__ */ new Date()).toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric", year: "numeric" })))), /* @__PURE__ */ React.createElement("div", { className: "flex items-center gap-2 flex-wrap no-print" }, /* @__PURE__ */ React.createElement("div", { className: "relative" }, /* @__PURE__ */ React.createElement("button", { onClick: () => {
       setShowThemeMenu((s) => !s);
       setShowSecurityMenu(false);
       setShowBackupMenu(false);
@@ -1432,7 +1735,10 @@
       /* @__PURE__ */ React.createElement(Plug, { size: 16 }),
       fileHandle && /* @__PURE__ */ React.createElement("span", { className: "absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full bg-emerald-400" }),
       needsReconnect && /* @__PURE__ */ React.createElement("span", { className: "absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full bg-amber-400" })
-    ), showBackupMenu && /* @__PURE__ */ React.createElement("div", { className: "absolute right-0 mt-2 w-72 bg-[#111826] border border-slate-800 rounded-xl p-4 z-20 shadow-xl text-[12px]" }, fileHandle ? /* @__PURE__ */ React.createElement("div", { className: "space-y-2" }, /* @__PURE__ */ React.createElement("p", { className: "text-slate-300" }, "Auto-saving to ", /* @__PURE__ */ React.createElement("span", { className: "font-mono-data text-emerald-300" }, fileHandle.name)), saveStatus && /* @__PURE__ */ React.createElement("p", { className: "text-slate-500 text-[11px]" }, saveStatus), /* @__PURE__ */ React.createElement("button", { onClick: () => saveToHandle(fileHandle), className: "w-full bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg py-1.5" }, "Save now"), /* @__PURE__ */ React.createElement("button", { onClick: chooseBackupFile, className: "w-full bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg py-1.5" }, "Change file"), /* @__PURE__ */ React.createElement("button", { onClick: disconnectBackup, className: "w-full text-red-400 hover:text-red-300 rounded-lg py-1.5" }, "Disconnect")) : needsReconnect ? /* @__PURE__ */ React.createElement("div", { className: "space-y-2" }, /* @__PURE__ */ React.createElement("p", { className: "text-amber-300" }, "Reconnect to resume auto-saving to ", /* @__PURE__ */ React.createElement("span", { className: "font-mono-data" }, pendingHandleRef.current && pendingHandleRef.current.name)), /* @__PURE__ */ React.createElement("p", { className: "text-slate-500 text-[11px]" }, "Browsers require one click each time you reopen the page \u2014 this is a security rule, not a bug."), /* @__PURE__ */ React.createElement("button", { onClick: reconnectBackup, className: "w-full font-medium rounded-lg py-1.5 text-[#06222b]", style: { backgroundColor: accentColor } }, "Reconnect")) : /* @__PURE__ */ React.createElement("div", { className: "space-y-2" }, /* @__PURE__ */ React.createElement("p", { className: "text-slate-400" }, localStorageAvailable ? "Your data already auto-saves in this browser \u2014 no reconnecting needed on reopen. Connecting a file below is optional, for an external backup copy." : "Pick a file once \u2014 every change will auto-save there, no more manual export."), /* @__PURE__ */ React.createElement("button", { onClick: chooseBackupFile, className: "w-full font-medium rounded-lg py-1.5 text-[#06222b]", style: { backgroundColor: accentColor } }, "Choose backup file\u2026"), !fsSupported && /* @__PURE__ */ React.createElement("p", { className: "text-slate-600 text-[10px]" }, "Auto-save needs Chrome or Edge. Use manual save/load below instead."), fsSupported && isFileProtocol && /* @__PURE__ */ React.createElement("p", { className: "text-slate-600 text-[10px]" }, "Opened as a local file \u2014 this optional file connection needs re-choosing each time you reopen the page, but your task data itself is already saved in the browser regardless.")), /* @__PURE__ */ React.createElement("div", { className: "border-t border-slate-800 mt-3 pt-3 flex gap-2" }, /* @__PURE__ */ React.createElement("button", { onClick: exportBackup, className: "flex-1 text-slate-400 hover:text-slate-200 flex items-center justify-center gap-1.5 bg-slate-800/60 hover:bg-slate-800 rounded-lg py-1.5" }, /* @__PURE__ */ React.createElement(Save, { size: 13 }), " Save .json"), /* @__PURE__ */ React.createElement("button", { onClick: () => backupInputRef.current && backupInputRef.current.click(), className: "flex-1 text-slate-400 hover:text-slate-200 flex items-center justify-center gap-1.5 bg-slate-800/60 hover:bg-slate-800 rounded-lg py-1.5" }, /* @__PURE__ */ React.createElement(UploadIcon, { size: 13 }), " Load .json")))), /* @__PURE__ */ React.createElement("button", { onClick: () => setShowDrive(true), className: "relative flex items-center gap-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 font-medium text-sm px-3 py-2 rounded-lg transition-colors", title: "Google Drive sync" }, /* @__PURE__ */ React.createElement(Cloud, { size: 16 }), driveEnabled && /* @__PURE__ */ React.createElement("span", { className: "absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full", style: { backgroundColor: driveDotColor } })), /* @__PURE__ */ React.createElement("button", { onClick: () => setShowWordTemplate(true), className: "flex items-center gap-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 font-medium text-sm px-3 py-2 rounded-lg transition-colors", title: "Word report template" }, /* @__PURE__ */ React.createElement(FileText, { size: 16 })), /* @__PURE__ */ React.createElement("button", { onClick: () => setShowManage(true), className: "flex items-center gap-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 font-medium text-sm px-3 py-2 rounded-lg transition-colors", title: "Manage predefined values" }, /* @__PURE__ */ React.createElement(Settings, { size: 16 })), /* @__PURE__ */ React.createElement("button", { onClick: () => exportExcel(), className: "flex items-center gap-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 font-medium text-sm px-3.5 py-2 rounded-lg transition-colors", title: "Download Excel report" }, /* @__PURE__ */ React.createElement(Download, { size: 16 }), /* @__PURE__ */ React.createElement("span", { className: "hidden sm:inline" }, "Excel")), /* @__PURE__ */ React.createElement("button", { onClick: () => exportCSV(), className: "flex items-center gap-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 font-medium text-sm px-3.5 py-2 rounded-lg transition-colors", title: "Download CSV report" }, /* @__PURE__ */ React.createElement(Download, { size: 16 }), /* @__PURE__ */ React.createElement("span", { className: "hidden sm:inline" }, "CSV")), /* @__PURE__ */ React.createElement("button", { onClick: () => setShowForm((s) => !s), className: "flex items-center gap-1.5 hover:opacity-90 text-[#06222b] font-medium text-sm px-3.5 py-2 rounded-lg transition-opacity", style: { backgroundColor: accentColor } }, showForm ? /* @__PURE__ */ React.createElement(X, { size: 16 }) : /* @__PURE__ */ React.createElement(Plus, { size: 16 }), showForm ? "Cancel" : "New task"))), /* @__PURE__ */ React.createElement("div", { className: "max-w-5xl mx-auto px-5 pb-4 flex flex-wrap items-center gap-3" }, /* @__PURE__ */ React.createElement("div", { className: "flex gap-4 text-[12px] font-mono-data" }, /* @__PURE__ */ React.createElement("span", { className: "flex items-center gap-1.5 text-amber-300" }, /* @__PURE__ */ React.createElement("span", { className: "w-1.5 h-1.5 rounded-full bg-amber-400" }), " ", pendingCount, " pending"), /* @__PURE__ */ React.createElement("span", { className: "flex items-center gap-1.5 text-emerald-300" }, /* @__PURE__ */ React.createElement("span", { className: "w-1.5 h-1.5 rounded-full bg-emerald-400" }), " ", closedCount, " closed"), /* @__PURE__ */ React.createElement("span", { className: "text-slate-600" }, "\xB7"), /* @__PURE__ */ React.createElement("span", { className: "text-slate-500" }, filteredTasks.length, filterActive ? ` of ${tasks.length}` : "", " shown")), /* @__PURE__ */ React.createElement("div", { className: "flex items-center gap-1 text-[12px]" }, ["all", "pending", "closed"].map((sf) => /* @__PURE__ */ React.createElement(
+    ), showBackupMenu && /* @__PURE__ */ React.createElement("div", { className: "absolute right-0 mt-2 w-72 bg-[#111826] border border-slate-800 rounded-xl p-4 z-20 shadow-xl text-[12px]" }, fileHandle ? /* @__PURE__ */ React.createElement("div", { className: "space-y-2" }, /* @__PURE__ */ React.createElement("p", { className: "text-slate-300" }, "Auto-saving to ", /* @__PURE__ */ React.createElement("span", { className: "font-mono-data text-emerald-300" }, fileHandle.name)), saveStatus && /* @__PURE__ */ React.createElement("p", { className: "text-slate-500 text-[11px]" }, saveStatus), /* @__PURE__ */ React.createElement("button", { onClick: () => saveToHandle(fileHandle), className: "w-full bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg py-1.5" }, "Save now"), /* @__PURE__ */ React.createElement("button", { onClick: chooseBackupFile, className: "w-full bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg py-1.5" }, "Change file"), /* @__PURE__ */ React.createElement("button", { onClick: disconnectBackup, className: "w-full text-red-400 hover:text-red-300 rounded-lg py-1.5" }, "Disconnect")) : needsReconnect ? /* @__PURE__ */ React.createElement("div", { className: "space-y-2" }, /* @__PURE__ */ React.createElement("p", { className: "text-amber-300" }, "Reconnect to resume auto-saving to ", /* @__PURE__ */ React.createElement("span", { className: "font-mono-data" }, pendingHandleRef.current && pendingHandleRef.current.name)), /* @__PURE__ */ React.createElement("p", { className: "text-slate-500 text-[11px]" }, "Browsers require one click each time you reopen the page \u2014 this is a security rule, not a bug."), /* @__PURE__ */ React.createElement("button", { onClick: reconnectBackup, className: "w-full font-medium rounded-lg py-1.5 text-[#06222b]", style: { backgroundColor: accentColor } }, "Reconnect")) : /* @__PURE__ */ React.createElement("div", { className: "space-y-2" }, /* @__PURE__ */ React.createElement("p", { className: "text-slate-400" }, localStorageAvailable ? "Your data already auto-saves in this browser \u2014 no reconnecting needed on reopen. Connecting a file below is optional, for an external backup copy." : "Pick a file once \u2014 every change will auto-save there, no more manual export."), /* @__PURE__ */ React.createElement("button", { onClick: chooseBackupFile, className: "w-full font-medium rounded-lg py-1.5 text-[#06222b]", style: { backgroundColor: accentColor } }, "Choose backup file\u2026"), !fsSupported && /* @__PURE__ */ React.createElement("p", { className: "text-slate-600 text-[10px]" }, "Auto-save needs Chrome or Edge. Use manual save/load below instead."), fsSupported && isFileProtocol && /* @__PURE__ */ React.createElement("p", { className: "text-slate-600 text-[10px]" }, "Opened as a local file \u2014 this optional file connection needs re-choosing each time you reopen the page, but your task data itself is already saved in the browser regardless.")), /* @__PURE__ */ React.createElement("div", { className: "border-t border-slate-800 mt-3 pt-3 flex gap-2" }, /* @__PURE__ */ React.createElement("button", { onClick: exportBackup, className: "flex-1 text-slate-400 hover:text-slate-200 flex items-center justify-center gap-1.5 bg-slate-800/60 hover:bg-slate-800 rounded-lg py-1.5" }, /* @__PURE__ */ React.createElement(Save, { size: 13 }), " Save .json"), /* @__PURE__ */ React.createElement("button", { onClick: () => backupInputRef.current && backupInputRef.current.click(), className: "flex-1 text-slate-400 hover:text-slate-200 flex items-center justify-center gap-1.5 bg-slate-800/60 hover:bg-slate-800 rounded-lg py-1.5" }, /* @__PURE__ */ React.createElement(UploadIcon, { size: 13 }), " Load .json")))), hasUsers && currentUser && /* @__PURE__ */ React.createElement("div", { className: "flex items-center gap-2 text-[12px] text-slate-400 mr-1" }, /* @__PURE__ */ React.createElement("span", null, currentUser.displayName, " \u00b7 ", ROLE_LABELS[currentUser.role]), /* @__PURE__ */ React.createElement("button", { onClick: () => {
+      setSessionUserId(null);
+      lsSet("ts-session", null);
+    }, className: "flex items-center gap-1 text-slate-300 hover:text-white bg-slate-800 hover:bg-slate-700 rounded-lg px-2.5 py-1.5", title: "Sign out" }, /* @__PURE__ */ React.createElement(LogOut, { size: 14 }))), /* @__PURE__ */ React.createElement("button", { onClick: () => setShowUsers(true), className: "flex items-center gap-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 font-medium text-sm px-3 py-2 rounded-lg transition-colors", title: "Users & permissions" }, /* @__PURE__ */ React.createElement(UsersIcon, { size: 16 })), /* @__PURE__ */ React.createElement("button", { onClick: () => setShowDrive(true), className: "relative flex items-center gap-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 font-medium text-sm px-3 py-2 rounded-lg transition-colors", title: "Google Drive sync" }, /* @__PURE__ */ React.createElement(Cloud, { size: 16 }), driveEnabled && /* @__PURE__ */ React.createElement("span", { className: "absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full", style: { backgroundColor: driveDotColor } })), /* @__PURE__ */ React.createElement("button", { onClick: () => setShowWordTemplate(true), className: "flex items-center gap-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 font-medium text-sm px-3 py-2 rounded-lg transition-colors", title: "Word report template" }, /* @__PURE__ */ React.createElement(FileText, { size: 16 })), /* @__PURE__ */ React.createElement("button", { onClick: () => setShowManage(true), className: "flex items-center gap-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 font-medium text-sm px-3 py-2 rounded-lg transition-colors", title: "Manage predefined values" }, /* @__PURE__ */ React.createElement(Settings, { size: 16 })), /* @__PURE__ */ React.createElement("button", { onClick: () => exportExcel(), className: "flex items-center gap-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 font-medium text-sm px-3.5 py-2 rounded-lg transition-colors", title: "Download Excel report" }, /* @__PURE__ */ React.createElement(Download, { size: 16 }), /* @__PURE__ */ React.createElement("span", { className: "hidden sm:inline" }, "Excel")), /* @__PURE__ */ React.createElement("button", { onClick: () => exportCSV(), className: "flex items-center gap-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 font-medium text-sm px-3.5 py-2 rounded-lg transition-colors", title: "Download CSV report" }, /* @__PURE__ */ React.createElement(Download, { size: 16 }), /* @__PURE__ */ React.createElement("span", { className: "hidden sm:inline" }, "CSV")), /* @__PURE__ */ React.createElement("button", { onClick: () => setShowForm((s) => !s), className: "perm-new flex items-center gap-1.5 hover:opacity-90 text-[#06222b] font-medium text-sm px-3.5 py-2 rounded-lg transition-opacity", style: { backgroundColor: accentColor } }, showForm ? /* @__PURE__ */ React.createElement(X, { size: 16 }) : /* @__PURE__ */ React.createElement(Plus, { size: 16 }), showForm ? "Cancel" : "New task"))), /* @__PURE__ */ React.createElement("div", { className: "max-w-5xl mx-auto px-5 pb-4 flex flex-wrap items-center gap-3" }, /* @__PURE__ */ React.createElement("div", { className: "flex gap-4 text-[12px] font-mono-data" }, /* @__PURE__ */ React.createElement("span", { className: "flex items-center gap-1.5 text-amber-300" }, /* @__PURE__ */ React.createElement("span", { className: "w-1.5 h-1.5 rounded-full bg-amber-400" }), " ", pendingCount, " pending"), /* @__PURE__ */ React.createElement("span", { className: "flex items-center gap-1.5 text-emerald-300" }, /* @__PURE__ */ React.createElement("span", { className: "w-1.5 h-1.5 rounded-full bg-emerald-400" }), " ", closedCount, " closed"), /* @__PURE__ */ React.createElement("span", { className: "text-slate-600" }, "\xB7"), /* @__PURE__ */ React.createElement("span", { className: "text-slate-500" }, filteredTasks.length, filterActive ? ` of ${visibleTasks.length}` : "", " shown")), /* @__PURE__ */ React.createElement("div", { className: "flex items-center gap-1 text-[12px]" }, ["all", "pending", "closed"].map((sf) => /* @__PURE__ */ React.createElement(
       "button",
       {
         key: sf,
@@ -1706,7 +2012,7 @@
       setForm(emptyForm());
       setFormTab("details");
       setShowForm(false);
-    }, className: "text-sm text-slate-400 hover:text-slate-200 px-3 py-2" }, "Cancel"), /* @__PURE__ */ React.createElement("button", { type: "submit", className: "bg-cyan-500 hover:bg-cyan-400 text-[#06222b] font-medium text-sm px-4 py-2 rounded-lg transition-colors" }, "Add task")))), selectedIds.length > 0 && /* @__PURE__ */ React.createElement("div", { className: "flex flex-wrap items-center gap-2 mb-4 p-3 rounded-xl border no-print", style: { backgroundColor: theme.panel, borderColor: theme.border } }, /* @__PURE__ */ React.createElement("span", { className: "text-[12px] text-slate-300" }, selectedIds.length, " selected"), /* @__PURE__ */ React.createElement("button", { onClick: bulkCloseSelected, className: "text-[12px] font-medium bg-slate-800 hover:bg-slate-700 text-slate-200 px-2.5 py-1 rounded-lg" }, "Mark closed"), /* @__PURE__ */ React.createElement("button", { onClick: () => bulkExportSelected("excel"), className: "text-[12px] font-medium bg-slate-800 hover:bg-slate-700 text-slate-200 px-2.5 py-1 rounded-lg" }, "Export Excel"), /* @__PURE__ */ React.createElement("button", { onClick: () => bulkExportSelected("csv"), className: "text-[12px] font-medium bg-slate-800 hover:bg-slate-700 text-slate-200 px-2.5 py-1 rounded-lg" }, "Export CSV"), /* @__PURE__ */ React.createElement("button", { onClick: bulkDeleteSelected, className: "text-[12px] font-medium text-red-400 hover:text-red-300 px-2.5 py-1 rounded-lg" }, "Delete"), /* @__PURE__ */ React.createElement("button", { onClick: () => setSelectedIds([]), className: "text-[12px] text-slate-500 hover:text-slate-300 ml-auto" }, "Clear selection")), view === "dashboard" ? /* @__PURE__ */ React.createElement(Dashboard, { tasks, theme, accentColor }) : filteredTasks.length === 0 ? /* @__PURE__ */ React.createElement("div", { className: "text-center py-20 text-slate-600" }, /* @__PURE__ */ React.createElement(Server, { size: 28, className: "mx-auto mb-3 opacity-40" }), /* @__PURE__ */ React.createElement("p", { className: "text-sm" }, filterActive ? "No tasks match this date." : "No tasks yet. Add one to get started.")) : /* @__PURE__ */ React.createElement("div", { className: "space-y-6" }, taskGroups.map((group, gi) => /* @__PURE__ */ React.createElement("div", { key: group.label || "flat" }, group.label && /* @__PURE__ */ React.createElement("div", { className: "flex items-center gap-2 mb-3" }, /* @__PURE__ */ React.createElement("h3", { className: "text-[12px] font-semibold uppercase tracking-wide text-slate-400" }, group.label), /* @__PURE__ */ React.createElement("span", { className: "text-[11px] text-slate-600 font-mono-data" }, group.items.length), /* @__PURE__ */ React.createElement("div", { className: "h-px flex-1", style: { backgroundColor: theme.border } })), /* @__PURE__ */ React.createElement("div", { className: "grid grid-cols-1 lg:grid-cols-2 gap-3 items-start" }, group.items.map((t) => {
+    }, className: "text-sm text-slate-400 hover:text-slate-200 px-3 py-2" }, "Cancel"), /* @__PURE__ */ React.createElement("button", { type: "submit", className: "bg-cyan-500 hover:bg-cyan-400 text-[#06222b] font-medium text-sm px-4 py-2 rounded-lg transition-colors" }, "Add task")))), selectedIds.length > 0 && /* @__PURE__ */ React.createElement("div", { className: "flex flex-wrap items-center gap-2 mb-4 p-3 rounded-xl border no-print", style: { backgroundColor: theme.panel, borderColor: theme.border } }, /* @__PURE__ */ React.createElement("span", { className: "text-[12px] text-slate-300" }, selectedIds.length, " selected"), /* @__PURE__ */ React.createElement("button", { title: "Mark selected closed", onClick: bulkCloseSelected, className: "text-[12px] font-medium bg-slate-800 hover:bg-slate-700 text-slate-200 px-2.5 py-1 rounded-lg" }, "Mark closed"), /* @__PURE__ */ React.createElement("button", { title: "Download Excel report", onClick: () => bulkExportSelected("excel"), className: "text-[12px] font-medium bg-slate-800 hover:bg-slate-700 text-slate-200 px-2.5 py-1 rounded-lg" }, "Export Excel"), /* @__PURE__ */ React.createElement("button", { title: "Download CSV report", onClick: () => bulkExportSelected("csv"), className: "text-[12px] font-medium bg-slate-800 hover:bg-slate-700 text-slate-200 px-2.5 py-1 rounded-lg" }, "Export CSV"), /* @__PURE__ */ React.createElement("button", { title: "Delete selected", onClick: bulkDeleteSelected, className: "text-[12px] font-medium text-red-400 hover:text-red-300 px-2.5 py-1 rounded-lg" }, "Delete"), /* @__PURE__ */ React.createElement("button", { onClick: () => setSelectedIds([]), className: "text-[12px] text-slate-500 hover:text-slate-300 ml-auto" }, "Clear selection")), view === "dashboard" ? /* @__PURE__ */ React.createElement(Dashboard, { tasks: visibleTasks, theme, accentColor }) : filteredTasks.length === 0 ? /* @__PURE__ */ React.createElement("div", { className: "text-center py-20 text-slate-600" }, /* @__PURE__ */ React.createElement(Server, { size: 28, className: "mx-auto mb-3 opacity-40" }), /* @__PURE__ */ React.createElement("p", { className: "text-sm" }, filterActive ? "No tasks match this date." : "No tasks yet. Add one to get started.")) : /* @__PURE__ */ React.createElement("div", { className: "space-y-6" }, taskGroups.map((group, gi) => /* @__PURE__ */ React.createElement("div", { key: group.label || "flat" }, group.label && /* @__PURE__ */ React.createElement("div", { className: "flex items-center gap-2 mb-3" }, /* @__PURE__ */ React.createElement("h3", { className: "text-[12px] font-semibold uppercase tracking-wide text-slate-400" }, group.label), /* @__PURE__ */ React.createElement("span", { className: "text-[11px] text-slate-600 font-mono-data" }, group.items.length), /* @__PURE__ */ React.createElement("div", { className: "h-px flex-1", style: { backgroundColor: theme.border } })), /* @__PURE__ */ React.createElement("div", { className: "grid grid-cols-1 lg:grid-cols-2 gap-3 items-start" }, group.items.map((t) => {
       const s = STATUS[t.status];
       const isOpen = !!expanded[t.id];
       const tab = cardTab[t.id] || "updates";
